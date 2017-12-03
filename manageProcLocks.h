@@ -6,7 +6,7 @@
 							// Also is the number of times the sender has to toggle its data/transmission locks for the sender to identify them
 #define NUM_DATA_LOCKS 8 // Max is 32 right now since I use unsigned int
 #define NUM_TOTAL_LOCKS NUM_DATA_LOCKS + 1
-#define BYTES_TO_TRANSFER 16
+#define BYTES_TO_TRANSFER 32
 #define BILLION 1000000000L	// Used for timing calculations
 
 // Used to store entries from /proc/locks

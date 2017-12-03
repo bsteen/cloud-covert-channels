@@ -190,7 +190,6 @@ int main(){
     printf("Handshake detected!\nAnalysing lock list...\n");
 
     if(determine_sender_locks()){
-
         printf("Sending ACK to sender...\n");
         ACK_sender();
         printf("ACK sent! Now receiving data...\n");
