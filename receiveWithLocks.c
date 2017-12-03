@@ -187,7 +187,7 @@ int main(){
 
     printf("Listening for handshake from sender...\n");
     initiate_handshake();
-    printf("Handshake detected!\nAnalysing lock list...\n");
+    printf("Done listening for handshake.\nAnalysing lock list...\n");
 
     if(determine_sender_locks()){
         printf("Sending ACK to sender...\n");
