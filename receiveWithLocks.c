@@ -51,7 +51,7 @@ int determine_sender_locks(){
             }
             else{ // The next NUM_TOTAL_LOCKS - 1 locks will be the data locks
                 strcpy(data_locks[NUM_DATA_LOCKS - locks_found], proclocks_list[i].device_number);
-                printf("\tData lock #%d found: %s %d\n", NUM_DATA_LOCKS - locks_found, data_locks[NUM_DATA_LOCKS - locks_found], proclocks_list[i].num_toggles);
+                printf("\tData lock %d found: %s %d\n", NUM_DATA_LOCKS - locks_found, data_locks[NUM_DATA_LOCKS - locks_found], proclocks_list[i].num_toggles);
                 locks_found++;
             }
 
@@ -141,7 +141,7 @@ void receive_data(){
         updateProcLocksList(); // Update the master list of locks and their bit states
         
         if(get_lock_value(transmit_lock) && !value_read){   // If transmit lock is set and locks haven't already been read
-            printf("\tReceived byte #%u: ", byte_number);
+            printf("\tReceived byte %u: ", byte_number);
 
             // Get lock data and put in received_data at byte_number
             int i;
@@ -185,9 +185,9 @@ int main(){
 		exit(1);
     }
 
-    printf("Initiating handshake with sender...\n");
+    printf("Listening for handshake from sender...\n");
     initiate_handshake();
-    printf("Handshake complete!\nAnalysing lock list...\n");
+    printf("Handshake detected!\nAnalysing lock list...\n");
 
     if(determine_sender_locks()){
 

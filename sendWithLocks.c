@@ -36,7 +36,7 @@ void set_transmit_lock(int set_value){
 }
 
 // Set the data locks using the bits of "data"
-void set_data_locks(unsigned int data){
+void set_data_locks(char data){
 	int i;
 	for(i = 0; i < NUM_DATA_LOCKS; i++){
 		if(data >> i & 1){
@@ -120,22 +120,46 @@ int has_receiver_ACKed(){
 
 // After the connection has been established, send the data that needs to be transferred
 void transfer_data(){
-	// TO DO: change this data array to be a large data file and scan it in
 	char dataArray[BYTES_TO_TRANSFER] = {0x09, 0xF9, 0x11, 0x02, 0x9D, 0x74, 0xE3, 0x5B, 0xD8, 0x41, 0x56, 0xC5, 0x63, 0x56, 0x88, 0xC0};
 	int i;
+	srand(time(NULL));
 
-	//Loop that goes through all the data and encodes it into the locks
+	// Loop that goes through all the data and encodes it into the locks
+	// ONLY	HAVE THIS FOR LOOP OR THE ONE BELOW ACTIVE. THE OTHER SHOULD BE COMMENTED OUT!
+	/*
 	for(i = 0; i < BYTES_TO_TRANSFER; i++){
+
 		printf("\tSending byte %d: 0x%02x\n", i, dataArray[i] & 0xFF);
 		
-		set_data_locks((unsigned int)dataArray[i]); // Encode data to locks
+		set_data_locks(dataArray[i]);	// Encode data to locks
 		set_transmit_lock(1);	// Raise transmit lock so receiver knows lock data is now valid
 
 		usleep(20000);	// Wait for receiver to parse data from locks
+						// This value can cause issues; the receiver my go out of sink
+
 		set_transmit_lock(0); // Lower transmit lock so receiver knows data is not ready yet
 		
 		usleep(40); // Let the receiver detect the lowered transmission lock
-		// This is an 
+					// This value can cause issues; the receiver my go out of sink
+	}
+	*/
+
+	// Generate BYTES_TO_TRANSFER number of random bytes and encodes it into the locks
+	// ONLY	HAVE THIS FOR LOOP OR THE ONE ABOVE ACTIVE. THE OTHER SHOULD BE COMMENTED OUT!
+	for(i = 0; i < BYTES_TO_TRANSFER; i++){
+		char byte = (char)(rand() % 0xFF);
+		printf("\tSending byte %d: 0x%02x\n", i, byte & 0xFF);
+		
+		set_data_locks(byte);	// Encode data to locks
+		set_transmit_lock(1);	// Raise transmit lock so receiver knows lock data is now valid
+
+		usleep(20000);	// Wait for receiver to parse data from locks
+						// This value can cause issues; the receiver my go out of sink
+
+		set_transmit_lock(0); // Lower transmit lock so receiver knows data is not ready yet
+		
+		usleep(40); // Let the receiver detect the lowered transmission lock
+					// This value can cause issues; the receiver my go out of sink
 	}
 
 	set_transmit_lock(0);	// Lower transmit lock; No longer transmitting data
