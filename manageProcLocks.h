@@ -4,10 +4,11 @@
 #define MAX_PROC_LOCK_ENTRIES 256	// Max number of /proc/locks entries this program can store
 #define TOGGLE_THRESHOLD 15	// Number of times the receiver has to toggle a lock in order for to ACK the senders
 							// Also is the number of times the sender has to toggle its data/transmission locks for the sender to identify them
-#define NUM_DATA_LOCKS 8 // Max is 32 right now since I use unsigned int
+#define NUM_DATA_LOCKS 32 	// Max is 32 right now since I use unsigned int
 #define NUM_TOTAL_LOCKS NUM_DATA_LOCKS + 1
-#define BYTES_TO_TRANSFER 32
+#define NUM_TRANSFERS 10	// Each transmission is 4 bytes
 #define BILLION 1000000000L	// Used for timing calculations
+#define TIMEOUT 2       	// Number of seconds of inactivity by the sender before the receiver drops the connection
 
 // Used to store entries from /proc/locks
 typedef struct LockEntry{
@@ -30,7 +31,7 @@ void updateFoundLocks();
 void updateUnFoundLocks();
 int getProcLocksListIndex(char *entry);
 void extractDeviceNumber(char *entry, char *dev_num);
-int get_num_lock_entries(); // Gets the number of locks num_LockEntries
+int get_num_lock_entries(); // Gets the number of locks, num_LockEntries
 int get_num_current_locks();
 
 #endif

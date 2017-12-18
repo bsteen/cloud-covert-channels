@@ -10,8 +10,9 @@
 // The sender should be started slightly before the receiver
 
 FILE *filelist[NUM_TOTAL_LOCKS];	// Array containing all the files to be locked/unlocked
+char ACK_lock[32];					// Holds the ACK lock device number; The lock used by the receiver to acknowledge a transmission
 
-// Locks or unlocks the specified file in filelist
+// Locks or unlocks the specified file in filelists
 void flock_file(int lock_num, int flock_operation){
 	int flock_error = flock(fileno(filelist[lock_num]), flock_operation);
 
@@ -22,8 +23,8 @@ void flock_file(int lock_num, int flock_operation){
 	return;
 }
 
-// Wrapper function to raise or lower the transmit lock
-// The transmit lock will always be the last lock in the list
+// Used to raise or lower the transmit lock
+// The transmit lock will always be the last lock in the lock list
 void set_transmit_lock(int set_value){
 	if(set_value){
 		flock_file(NUM_TOTAL_LOCKS - 1, LOCK_SH);
@@ -35,8 +36,9 @@ void set_transmit_lock(int set_value){
 	return;
 }
 
-// Set the data locks using the bits of "data"
-void set_data_locks(char data){
+// Set the data locks using the bits of the "data" argument
+// A max of 32 bits can be sent in one transmission
+void set_data_locks(unsigned int data){
 	int i;
 	for(i = 0; i < NUM_DATA_LOCKS; i++){
 		if(data >> i & 1){
@@ -50,10 +52,10 @@ void set_data_locks(char data){
 	return;
 }
 
-// Used during handshake; acts as the signal to tell the receiver to see which locks are going to be used
+// Used during handshake; acts as the signal to tell the receiver which locks are going to be used
 void set_all_locks(int set_value){
 	int i;
-	for(i = 0; i < 9; i++){
+	for(i = 0; i < NUM_TOTAL_LOCKS; i++){
 		if(set_value){
 			flock_file(i, LOCK_SH);
 		}
@@ -79,7 +81,7 @@ void initiate_handshake(){
 		set_all_locks(toggle_value);
 		toggle_value = !toggle_value;
 
-		usleep(250000);	// Wait 0.25 seconds
+		usleep(200000);	// Wait 200 ms
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
         elapsed_seconds = BILLION * (current_time.tv_sec - start_time.tv_sec) + current_time.tv_nsec - start_time.tv_nsec;
 	}
@@ -89,10 +91,11 @@ void initiate_handshake(){
 	return;
 }
 
-// The receiver ACKs the send by toggling 1 lock many times over 5 seconds.
+// The receiver ACKs the sender's handshake by toggling 1 lock many times over 5 seconds.
 // Go through all the recorded locks and see if they have reached the toggle threshold
-// If one has, that means the receiver has ACKed the sender container
-int has_receiver_ACKed(){
+// If one has, that means the receiver has ACKed the sender handshake
+// Record the receiver's ACK lock for later use
+int handshake_ACKed(){
 	int i;
 	struct timespec start_time, current_time;
     unsigned long elapsed_seconds = 0;
@@ -101,7 +104,7 @@ int has_receiver_ACKed(){
 	while(elapsed_seconds < BILLION * 5){
 		updateProcLocksList(); // Update the sender's records of the locks
 
-		usleep(10000);	// Wait 0.1 of a second
+		usleep(10000);	// Wait 10 ms
 		clock_gettime(CLOCK_MONOTONIC, &current_time);
         elapsed_seconds = BILLION * (current_time.tv_sec - start_time.tv_sec) + current_time.tv_nsec - start_time.tv_nsec;
 	}
@@ -111,6 +114,8 @@ int has_receiver_ACKed(){
     for(i = 0; i < lock_entry_count; i++){
         if(proclocks_list[i].num_toggles >= TOGGLE_THRESHOLD && proclocks_list[i].num_toggles < TOGGLE_THRESHOLD * 3){
 			printf("\tFound ACK lock %s with %d toggles.\n", proclocks_list[i].device_number, proclocks_list[i].num_toggles);
+			strcpy(ACK_lock, proclocks_list[i].device_number);	// Record the receiver's ACK lock device number in the global variable
+
             return 1; // The handshake has succesfully completed
         }
     }
@@ -118,15 +123,50 @@ int has_receiver_ACKed(){
     return 0; // The receiver did not ACK the sender
 }
 
-// After the connection has been established, send the data that needs to be transferred
+// Finds the ACK lock entry in proclocks_list and returns the locks current value
+// If the ACK lock is set by the receiver, then 1 is returned; Otherwise, 0 is returned
+int has_receiver_ACKed(){
+	updateProcLocksList();	// Update the current record of locks before getting the current value of the ACK lock
+
+	int i;
+    int num_lock_entries = get_num_lock_entries();
+
+    for(i = 0; i < num_lock_entries; i++){
+        if(strcmp(ACK_lock, proclocks_list[i].device_number) == 0){
+            return proclocks_list[i].bit_state;		// The current state of the ACK lock
+        }
+    }
+
+    printf("An error occurred; ACK lock with device number %s was not found in proclocks_list\n", ACK_lock);
+    return 0;
+}
+
+// Cleanup files and locks before exiting
+void exit_sender(){
+	// Unlock all the locks (if they haven't already) and close files
+	int i;
+    for(i = 0; i < NUM_TOTAL_LOCKS; i++){
+      flock_file(i, LOCK_UN);
+      fclose(filelist[i]);
+	}
+
+	printf("All files unlocked and closed.\n---END OF SENDER PROGRAM---\n");
+	return;
+}
+
+// After the connection has been established, transfer the data
 void transfer_data(){
-	char dataArray[BYTES_TO_TRANSFER] = {0x09, 0xF9, 0x11, 0x02, 0x9D, 0x74, 0xE3, 0x5B, 0xD8, 0x41, 0x56, 0xC5, 0x63, 0x56, 0x88, 0xC0};
 	int i;
 	srand(time(NULL));
+
+	struct timespec prev_trans_time, current_time; // The last time the sender has communicated with the receiver
+    unsigned long elapsed_seconds = 0;
+    clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);
 
 	// Loop that goes through all the data and encodes it into the locks
 	// ONLY	HAVE THIS FOR LOOP OR THE ONE BELOW ACTIVE. THE OTHER SHOULD BE COMMENTED OUT!
 	/*
+	char dataArray[BYTES_TO_TRANSFER] = {0x09, 0xF9, 0x11, 0x02, 0x9D, 0x74, 0xE3, 0x5B, 0xD8, 0x41, 0x56, 0xC5, 0x63, 0x56, 0x88, 0xC0};
 	for(i = 0; i < BYTES_TO_TRANSFER; i++){
 
 		printf("\tSending byte %d: 0x%02x\n", i, dataArray[i] & 0xFF);
@@ -144,22 +184,34 @@ void transfer_data(){
 	}
 	*/
 
-	// Generate BYTES_TO_TRANSFER number of random bytes and encodes it into the locks
+	// Generate NUM_TRANSFERS number of random integers (4 bytes each) and encodes it into the locks
 	// ONLY	HAVE THIS FOR LOOP OR THE ONE ABOVE ACTIVE. THE OTHER SHOULD BE COMMENTED OUT!
-	for(i = 0; i < BYTES_TO_TRANSFER; i++){
-		char byte = (char)(rand() % 0xFF);
-		printf("\tSending byte %d: 0x%02x\n", i, byte & 0xFF);
+	for(i = 0; i < NUM_TRANSFERS; i++){
+		unsigned int data = (unsigned int)rand();
+		printf("\tSending data %d: 0x%x\n", i, data);
 		
-		set_data_locks(byte);	// Encode data to locks
+		set_data_locks(data);	// Encode data to locks
 		set_transmit_lock(1);	// Raise transmit lock so receiver knows lock data is now valid
 
-		usleep(20000);	// Wait for receiver to parse data from locks
-						// This value can cause issues; the receiver my go out of sink
+		// Wait for the receiver to ACK this transmission
+		while(1){
+			if(has_receiver_ACKed()){
+				clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);	// Record the last time the receiver has ACKed
+				break;	// Receiver has received information and ACK it; Time to send next chunk of data
+			}
+
+			usleep(50);	// Sleep for 50 us
+
+			clock_gettime(CLOCK_MONOTONIC, &current_time);
+            elapsed_seconds = BILLION * (current_time.tv_sec - prev_trans_time.tv_sec) + current_time.tv_nsec - prev_trans_time.tv_nsec;
+
+            if(elapsed_seconds >= BILLION * TIMEOUT){
+                exit_sender();
+				exit(1); // If TIMEOUT seconds have past and the sender has not activated the connection lock, the connection is dead
+            }
+		}	
 
 		set_transmit_lock(0); // Lower transmit lock so receiver knows data is not ready yet
-		
-		usleep(40); // Let the receiver detect the lowered transmission lock
-					// This value can cause issues; the receiver my go out of sink
 	}
 
 	set_transmit_lock(0);	// Lower transmit lock; No longer transmitting data
@@ -168,22 +220,16 @@ void transfer_data(){
 	
 int main(){
 	printf("---STARTING SENDER PROGRAM---\n");
+	int i;
 
     // Create empty files to place the lock on
-	// Last 8 locks will be the data locks
-	// TO DO: make this a for-loop that creates NUM_TOTAL_LOCKS locks
-    filelist[0] = fopen("lockfile0", "a");	// Represents the lowest bit (will have the lowest inode number of the locks)
-    filelist[1] = fopen("lockfile1", "a");  
-    filelist[2] = fopen("lockfile2", "a");
-    filelist[3] = fopen("lockfile3", "a");
-    filelist[4] = fopen("lockfile4", "a");
-    filelist[5] = fopen("lockfile5", "a");
-    filelist[6] = fopen("lockfile6", "a");
-    filelist[7] = fopen("lockfile7", "a");	// Represents the highest bit (will have the highest inode number of the locks)
-	filelist[8] = fopen("lockfile8", "a");	// This file will be hold the signal lock
-	
-	int i;
-	for(i = 0; i < 9; i++){
+	// Lock 0 represents the lowest bit; lock 31 represents the highest bit
+	// Lock 32 will be the transmission lock
+	char filename[16];
+	for(i = 0;  i < NUM_TOTAL_LOCKS; i++){
+		sprintf(filename, "lockfile%d", i);
+		filelist[i] = fopen(filename, "a");
+
 		if(filelist[i] == NULL){
 			printf("Error opening lockfile%d", i);
 			exit(1);
@@ -195,8 +241,8 @@ int main(){
 	initiate_handshake();
 	printf("Handshake complete! Checking for receiver ACK...\n");
 
-    if(has_receiver_ACKed()){
-		printf("Receiver has ACKed! Starting data transfer...\n");
+    if(handshake_ACKed()){
+		printf("Receiver has ACKed the handshake! Starting data transfer...\n");
 		transfer_data();
 		printf("Data transfer complete!\n");
 	}
@@ -204,13 +250,7 @@ int main(){
 		printf("Receiver didn't send ACK. No data will be transferred.\n");
 	}
 
-	// Unlock all the locks (if they haven't already) and close files
-    for(i = 0; i < NUM_TOTAL_LOCKS; i++){
-      flock_file(i, LOCK_UN);
-      fclose(filelist[i]);
-	}
-
-	printf("All files unlocked and closed.\n---END OF SENDER PROGRAM---\n");
+	exit_sender();
 	
     return 0;
 }
