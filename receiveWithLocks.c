@@ -10,6 +10,7 @@
 char data_locks[NUM_DATA_LOCKS][32];        // Locks used to determine if sender is still active and/or is sending valid information
 char transmit_lock[32];                     // These data and transmit arrays contain the device numbers of the locks
 unsigned int received_data[NUM_TRANSFERS];  // Data received by the sender is stored in this array; CHANGE THIS TO AN OUTPUT FILE LATER
+unsigned int transmission_number = 0;
 
 FILE *ACK_file; // File that will hold the lock used for ACKing the sender
 
@@ -45,21 +46,20 @@ int determine_sender_locks(){
             // The first lock will be the transmit lock
             if(locks_found == 0){
                 strcpy(transmit_lock, proclocks_list[i].device_number);
-                printf("\tTransmit lock found: %s %d\n", transmit_lock,  proclocks_list[i].num_toggles);
-                locks_found++; 
+                //printf("\tTransmit lock found: %s %d\n", transmit_lock,  proclocks_list[i].num_toggles);
             }
             else{ // The next NUM_TOTAL_LOCKS - 1 locks will be the data locks
                 strcpy(data_locks[NUM_DATA_LOCKS - locks_found], proclocks_list[i].device_number);
-                printf("\tData lock %d found: %s %d\n", NUM_DATA_LOCKS - locks_found, data_locks[NUM_DATA_LOCKS - locks_found], proclocks_list[i].num_toggles);
-                locks_found++;
+                //printf("\tData lock %d found: %s %d\n", NUM_DATA_LOCKS - locks_found, data_locks[NUM_DATA_LOCKS - locks_found], proclocks_list[i].num_toggles);
             }
+			locks_found++;
 
             if(locks_found >= NUM_TOTAL_LOCKS){
                 break;
             }
         }
     }
-    
+
     printf("\t%d/%d valid locks were found.\n", locks_found, NUM_TOTAL_LOCKS);
 
     if(locks_found == NUM_TOTAL_LOCKS){
@@ -101,7 +101,7 @@ void ACK_handshake(){
     while(elapsed_seconds < BILLION * 5){   // send ACK for 5 seconds
         set_ACK_lock(toggle_value);
 		toggle_value = !toggle_value;
-        usleep(200000);  // Wait 200 ms
+        usleep(200000);  // Wait 200 ms before toggling the ACK lock
 	    clock_gettime(CLOCK_MONOTONIC, &current);
         elapsed_seconds = BILLION * (current.tv_sec - start.tv_sec) + current.tv_nsec - start.tv_nsec;
 	}
@@ -128,7 +128,7 @@ int get_lock_value(char *device_number){
 // After a new transmission is received, send ACK to sender by setting the ACK lock
 void ACK_sender(){
     set_ACK_lock(1);
-    usleep(500);   // Hold the ACK lock for 500 us
+    usleep(ACK_TIME);	// Hold the ACK lock for this long, then get ready to receive the next transmission
     set_ACK_lock(0);
 
     return;
@@ -136,17 +136,20 @@ void ACK_sender(){
 
 // While the sender is still sending data, the receiver will parse the list of locks and extract the bits values of the data locks
 void receive_data(){
-    unsigned int transmission_number = 0;
     int connection_active = 1;
 
-    struct timespec prev_trans_time, current_time; 
+    struct timespec prev_trans_time, current_time;
     unsigned long elapsed_seconds = 0;
     clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);   // The last time the sender has communicated with the receiver
 
     do{
         updateProcLocksList(); // Update the master list of locks and their bit states
-        
-        if(get_lock_value(transmit_lock)){   // If transmit lock is set, read the data
+
+		if(transmission_number == NUM_TRANSFERS){
+			connection_active = 0;
+			printf("Expected number of transissions have been received.\n");
+		}
+        else if(get_lock_value(transmit_lock)){   // If transmit lock is set, read the data
             printf("\tReceived transmission %u: ", transmission_number);
             int i;
             received_data[transmission_number] = 0;     // Clear the place where data is to be stored
@@ -156,7 +159,7 @@ void receive_data(){
                 received_data[transmission_number] |= get_lock_value(data_locks[i]) << i;
             }
 
-            printf("0x%x\n", received_data[transmission_number]);
+            printf("0x%08x\n", received_data[transmission_number]);
 
             transmission_number++;
             clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);   // Update the last time the sender has communicated with the receiver
@@ -176,7 +179,7 @@ void receive_data(){
 }
 
 int main(){
-    printf("---STARTING RECEIVER PROGRAM---\n");    
+    printf("---STARTING RECEIVER PROGRAM---\n");
 
     ACK_file = fopen("lockfileACK", "a");
     if(ACK_file == NULL){
@@ -187,21 +190,21 @@ int main(){
 
     printf("Listening for handshake from sender...\n");
     initiate_handshake();
-    printf("Done listening for handshake.\nAnalysing lock list...\n");
+    printf("Done listening for handshake. Analysing lock list...\n");
 
     if(determine_sender_locks()){
         printf("ACKing handshake...\n");
         ACK_handshake();
         printf("ACK sent! Now receiving data...\n");
         receive_data();
-        printf("Connection with sender ended.\n");
+        printf("Connection with sender ended. %d transmissions received (%d bytes).\n", transmission_number, transmission_number*4);
     }
     else{
         printf("Sender was not found.\n");
     }
 
     fclose(ACK_file);
-    printf("---END RECEIVER PROGRAM---\n");    
+    printf("---END RECEIVER PROGRAM---\n");
 
     return 0;
 }

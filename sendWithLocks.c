@@ -32,7 +32,7 @@ void set_transmit_lock(int set_value){
 	else{
 		flock_file(NUM_TOTAL_LOCKS - 1, LOCK_UN);
 	}
-	
+
 	return;
 }
 
@@ -133,7 +133,7 @@ int has_receiver_ACKed(){
 
     for(i = 0; i < num_lock_entries; i++){
         if(strcmp(ACK_lock, proclocks_list[i].device_number) == 0){
-            return proclocks_list[i].bit_state;		// The current state of the ACK lock
+           return proclocks_list[i].bit_state;		// The current state of the ACK lock; If the receiver has ACKed, then 1 is retuned
         }
     }
 
@@ -150,7 +150,7 @@ void exit_sender(){
       fclose(filelist[i]);
 	}
 
-	printf("All files unlocked and closed.\n---END OF SENDER PROGRAM---\n");
+	// printf("All files unlocked and closed.\n---END OF SENDER PROGRAM---\n");
 	return;
 }
 
@@ -159,18 +159,19 @@ void transfer_data(){
 	int i;
 	srand(time(NULL));
 
-	struct timespec prev_trans_time, current_time; // The last time the sender has communicated with the receiver
+	struct timespec prev_trans_time, current_time;	// The last time the sender has communicated with the receiver
     unsigned long elapsed_seconds = 0;
-    clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);
+	clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);
 
 	// Loop that goes through all the data and encodes it into the locks
 	// ONLY	HAVE THIS FOR LOOP OR THE ONE BELOW ACTIVE. THE OTHER SHOULD BE COMMENTED OUT!
+	// NEED TO UPDATE THIS FUNCTIONS TO WORK WITH NEW ACK SYSTEM
 	/*
 	char dataArray[BYTES_TO_TRANSFER] = {0x09, 0xF9, 0x11, 0x02, 0x9D, 0x74, 0xE3, 0x5B, 0xD8, 0x41, 0x56, 0xC5, 0x63, 0x56, 0x88, 0xC0};
 	for(i = 0; i < BYTES_TO_TRANSFER; i++){
 
 		printf("\tSending byte %d: 0x%02x\n", i, dataArray[i] & 0xFF);
-		
+
 		set_data_locks(dataArray[i]);	// Encode data to locks
 		set_transmit_lock(1);	// Raise transmit lock so receiver knows lock data is now valid
 
@@ -178,46 +179,48 @@ void transfer_data(){
 						// This value can cause issues; the receiver my go out of sink
 
 		set_transmit_lock(0); // Lower transmit lock so receiver knows data is not ready yet
-		
+
 		usleep(40); // Let the receiver detect the lowered transmission lock
 					// This value can cause issues; the receiver my go out of sink
 	}
 	*/
 
-	// Generate NUM_TRANSFERS number of random integers (4 bytes each) and encodes it into the locks
+	// Generates NUM_TRANSFERS number of random integers (4 bytes each) and encodes it into the locks
 	// ONLY	HAVE THIS FOR LOOP OR THE ONE ABOVE ACTIVE. THE OTHER SHOULD BE COMMENTED OUT!
 	for(i = 0; i < NUM_TRANSFERS; i++){
 		unsigned int data = (unsigned int)rand();
-		printf("\tSending data %d: 0x%x\n", i, data);
-		
+		printf("\tSending data %d: 0x%08x\n", i, data);
+
 		set_data_locks(data);	// Encode data to locks
 		set_transmit_lock(1);	// Raise transmit lock so receiver knows lock data is now valid
 
 		// Wait for the receiver to ACK this transmission
 		while(1){
 			if(has_receiver_ACKed()){
+				set_transmit_lock(0); // Lower transmit lock so receiver knows data is not ready yet
+
 				clock_gettime(CLOCK_MONOTONIC, &prev_trans_time);	// Record the last time the receiver has ACKed
+				usleep(ACK_TIME);	// Wait for the receiver to put down its ACK lock (don't want to the sender to double count the same ACK)
+
 				break;	// Receiver has received information and ACK it; Time to send next chunk of data
 			}
 
-			usleep(50);	// Sleep for 50 us
-
+			usleep(1);	// Sleep for 1 us before checking for the ACK lock again
 			clock_gettime(CLOCK_MONOTONIC, &current_time);
             elapsed_seconds = BILLION * (current_time.tv_sec - prev_trans_time.tv_sec) + current_time.tv_nsec - prev_trans_time.tv_nsec;
 
             if(elapsed_seconds >= BILLION * TIMEOUT){
-                exit_sender();
+                printf("Receiver has not ACKed for at least %d seconds. Connection timed out.\n%d out of %d transmissions sent.\n", TIMEOUT, i+1, NUM_TRANSFERS);
+				exit_sender();
 				exit(1); // If TIMEOUT seconds have past and the sender has not activated the connection lock, the connection is dead
             }
-		}	
-
-		set_transmit_lock(0); // Lower transmit lock so receiver knows data is not ready yet
+		}
 	}
 
 	set_transmit_lock(0);	// Lower transmit lock; No longer transmitting data
 	return;
 }
-	
+
 int main(){
 	printf("---STARTING SENDER PROGRAM---\n");
 	int i;
@@ -231,7 +234,7 @@ int main(){
 		filelist[i] = fopen(filename, "a");
 
 		if(filelist[i] == NULL){
-			printf("Error opening lockfile%d", i);
+			printf("Error opening lockfile%d.\n---END OF SENDER PROGRAM---\n", i);
 			exit(1);
 		}
 	}
@@ -243,14 +246,15 @@ int main(){
 
     if(handshake_ACKed()){
 		printf("Receiver has ACKed the handshake! Starting data transfer...\n");
+		sleep(1);	// Sleep 1 second before sending data; Allows the receiver to catch up
 		transfer_data();
-		printf("Data transfer complete!\n");
+		printf("Data transfer complete! %d tranmissions sent (%d bytes).\n", NUM_TRANSFERS, NUM_TRANSFERS*4);
 	}
 	else{
 		printf("Receiver didn't send ACK. No data will be transferred.\n");
 	}
 
 	exit_sender();
-	
+
     return 0;
 }

@@ -6,9 +6,10 @@
 							// Also is the number of times the sender has to toggle its data/transmission locks for the sender to identify them
 #define NUM_DATA_LOCKS 32 	// Max is 32 right now since I use unsigned int
 #define NUM_TOTAL_LOCKS NUM_DATA_LOCKS + 1
-#define NUM_TRANSFERS 10	// Each transmission is 4 bytes
+#define NUM_TRANSFERS 100	// Number of of transmissions to send from the sender to the receiver. Each transmission is 4 bytes
 #define BILLION 1000000000L	// Used for timing calculations
 #define TIMEOUT 2       	// Number of seconds of inactivity by the sender before the receiver drops the connection
+#define ACK_TIME 500		// Number of microseconds the receiver will hold the current ACK for (used in data transfer only, not handshake)
 
 // Used to store entries from /proc/locks
 typedef struct LockEntry{
