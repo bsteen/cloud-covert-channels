@@ -1,7 +1,7 @@
-#cloud-covert-channels
+# cloud-covert-channels
 Creating a covert channel in Linux-based cloud environments
 
-##Folders
+## Folders
 **proc-locks**  
 Covert channel using /proc/locks.
 
