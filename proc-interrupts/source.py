@@ -1,18 +1,23 @@
-from pynput.keyboard import Key, Controller
+from threading import Thread
+from time import sleep
 
-def print_kb_interrupt():
+def print_LOC():
     interrupts = open("/proc/interrupts", "r")
-    interrupts.readline()
-    interrupts.readline()
-    print(interrupts.readline().strip())
-    interrupts.close()
+    for line in interrupts.readlines():
+        if line.find("LOC") != -1:
+            print(line.strip())
+            break
+
+def threaded_function(arg):
+    sleep(1)
 
 if __name__== "__main__":
-    keyboard = Controller()
+    print_LOC()
+    thread = Thread(target = threaded_function, args = (0, ))
 
-    print_kb_interrupt()
+    thread.start()
+    thread.join()
+    print_LOC()
 
-    for x in range (10):
-        exec(open("./kb-interrupt").read())
-
-    print_kb_interrupt()
+    sleep(1)
+    print_LOC()
