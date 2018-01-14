@@ -1,4 +1,4 @@
-// meminfo.h
+// meminfo.hpp
 // Defines interface functions in meminfo.c used by source.c and sink.c
 // Defines costants used by meminfo.c, source.c, and sink.c
 

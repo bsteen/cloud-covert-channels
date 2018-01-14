@@ -1,19 +1,23 @@
 all: source sink
 
 source: source.o meminfo.o
-	gcc source.o meminfo.o -o source
+	g++ source.o meminfo.o -o source
 
 sink: sink.o meminfo.o
-	gcc sink.o meminfo.o -o sink
+	g++ sink.o meminfo.o -o sink
 
-source.o: source.c meminfo.h
-	gcc -c source.c
+# For testing
+meminfo: meminfo.o
+	g++ meminfo.o -o meminfo
 
-sink.o: sink.c meminfo.h
-	gcc -c sink.c
+source.o: source.cpp meminfo.hpp
+	g++ -c source.cpp
 
-meminfo.o: meminfo.c meminfo.h
-	gcc -c meminfo.c
+sink.o: sink.cpp meminfo.hpp
+	g++ -c sink.cpp
+
+meminfo.o: meminfo.cpp meminfo.hpp
+	g++ -c meminfo.cpp meminfo.hpp
 
 clean:
 	rm -f *.o source sink meminfo
