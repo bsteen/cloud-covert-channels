@@ -15,4 +15,4 @@ from the sender or re-count the same transmission one or more times.
 An attempt to create a covert channel using /proc/interrupts. Channel not completed.  
 
 **proc-meminfo**  
-Covert channel using /proc/meminfo.
+Covert channel using /proc/meminfo. Channel development in progress.  

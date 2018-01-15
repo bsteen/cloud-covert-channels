@@ -75,6 +75,7 @@ void update_mem_free(){
 
 // Gets the newest value of mem_free and adds it to the vector of calib_readings
 // Average execution time: 
+// TO IMPLEMENT: Also calculate standard deviation to account to memory usage fluctuations; This info could be used by the source
 void record_calib_reading(){
     update_mem_free();
     calib_readings.push_back(mem_free);
@@ -107,7 +108,7 @@ void calc_base_mem_free(){
 unsigned long do_channel_calibartion(){
     struct timespec start, current;
     unsigned long elapsed_nano_sec = 0;
-    unsigned long calib_time= CALIB_TIME * 1000000000;
+    unsigned long calib_time = CALIB_TIME * 1000000000UL;
 
     while(elapsed_nano_sec < calib_time){
         record_calib_reading();     // Take another calibation reading
@@ -120,7 +121,7 @@ unsigned long do_channel_calibartion(){
 }
 
 // For testing functions; not used in actual application
-int main(){
+// int main(){
 
     // struct timespec start, current;
     // unsigned long elapsed_nano_sec = 0;
@@ -138,4 +139,4 @@ int main(){
     //         sleep(1);
     // }
     // cout << (sum / 10)/1000000000.0 << endl;
-}
+// }
