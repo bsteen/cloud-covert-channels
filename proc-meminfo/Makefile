@@ -20,4 +20,4 @@ meminfo.o: meminfo.cpp meminfo.hpp
 	g++ -c meminfo.cpp meminfo.hpp
 	
 clean:
-	rm -f *.o source sink meminfo
+	rm -f *.o *.gch source sink meminfo
