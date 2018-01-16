@@ -2,6 +2,7 @@
 // Defines interface functions in meminfo.c used by source.c and sink.c
 // Defines costants used by meminfo.c, source.c, and sink.c
 #include <string>
+#include <vector>
 using namespace std;
 
 #define HIGH_BIT_ALLOC 200000   // Number of kB below baseline FreeMem for sink to detect a '1'
@@ -21,3 +22,6 @@ void record_calib_reading();            // Used internally meminfo.cpp
 void record_trans_reading();            // Used by sink
 void calc_base_mem_free();              // Used internally meminfo.cpp
 unsigned long do_channel_calibartion(); // Used by source and sink
+
+char src_seq[] = {1,1,1,1,1,1,1,1};     // Only used for initializing the source_sequence vector
+vector<char> source_sequence (src_seq, src_seq + sizeof(src_seq) / sizeof(char)); // The source's starting sequence to signify the start of transmission data

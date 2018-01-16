@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <vector>
 
 unsigned long mem_free = 0;         // Amount of RAM in kB left unused by the system
 unsigned long base_mem_free = 0;    // The average (baseline) MemFree value calculated before the channel begins transmitting; Used as the "null" value during transmission
