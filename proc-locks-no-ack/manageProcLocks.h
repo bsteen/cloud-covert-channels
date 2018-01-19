@@ -11,7 +11,7 @@
 
 // Used to store entries from /proc/locks
 typedef struct LockEntry{
-	char device_number[32]; //Format is MM:mm:INODE; Might need to increase this array size of inode numbers are too large
+	char device_number[32]; //Format is MM:mm:INODE; Might need to increase this array size if inode numbers are too large
 	int bit_state;			// Was the lock present (set to 1) or not present this time (set to 0)
 	int num_toggles;
 	int entry_updated; 		// For this current update call, has the lock's state already been recorded?
