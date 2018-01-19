@@ -14,7 +14,7 @@ using namespace std;
 #define CALIB_TIME 5            // Amount of seconds source/sink will spend calculating the average baseline memory usage before starting the channel
 #define CALIB_DELAY 100000      // Number of microseconds between each calibration recording; A smaller number means more calibration recordings will be made
 #define RECORD_DELAY 1000       // Number of microseconds between sink's recordings; A smaller number means sink will record more values of FreeMem
-                                // This number must be smaller than SEND_DELAY, or the sink WILL miss source transmissions
+								// This number must be smaller than SEND_DELAY, or the sink WILL miss source transmissions
 #define SEND_DELAY 10000        // Number of microseconds between source's transmissions; A smaller number means source will send bits faster
 #define NUM_CONSEC_VAL 2        // Number of consecutive reading of the same type (1, 0, or null) that need to occur for a value to be recognized.
 
