@@ -1,5 +1,5 @@
 # cloud-covert-channels
-Creating a covert channel in Linux-based cloud environments
+Creating a covert channel in Linux-based cloud container environments.  
 
 ## Folders
 **proc-locks**  
