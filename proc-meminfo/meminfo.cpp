@@ -54,7 +54,6 @@ string extract_mem_val(string line){
 }
 
 // Get the current MemFree value from /proc/meminfo and store it in mem_free
-// Average execution time: 0.0001 sec (100 us)
 void update_mem_free(){
     ifstream file;
     file.open("/proc/meminfo");
@@ -76,7 +75,6 @@ void update_mem_free(){
 }
 
 // Gets the newest value of mem_free and adds it to the vector of calib_readings
-// Average execution time: 
 // TO IMPLEMENT: Also calculate standard deviation to account to memory usage fluctuations; This info could be used by the source
 void record_calib_reading(){
     update_mem_free();
@@ -85,7 +83,6 @@ void record_calib_reading(){
 }
 
 // Gets the newest value of mem_free and adds it to the vector of trans_readings
-// Average execution time: 
 void record_trans_reading(){
     update_mem_free();
     trans_readings.push_back(mem_free);     // POTENTIAL ISSUE: As the program runs more memory is needed to store the recordings, which will affect the value of MemFree

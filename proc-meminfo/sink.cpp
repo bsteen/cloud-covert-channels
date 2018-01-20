@@ -70,15 +70,18 @@ void convert_transmission(){
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
 	for(int i = 0; i < trans_readings.size(); i++){
 		if(trans_readings[i] <= ONE && null_found){
+			cout << "Found 1 @" << trans_readings[i] << " kb" << endl;
 			data.push_back(1);
 			null_found = false;
 		}
 		else if(trans_readings[i] <= ZERO && null_found){
+			cout << "Found 0 @" << trans_readings[i] << " kb" << endl;
 			data.push_back(0);
 			null_found = false;
 		}
 		else{
 			// Represents a null value (An "idle" value in between transmission of a 1 or 0)
+			// cout << "Found null @" << trans_readings[i] << " kb" << endl;
 			null_found = true;
 		}
 	}

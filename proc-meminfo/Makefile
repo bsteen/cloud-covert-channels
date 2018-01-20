@@ -18,6 +18,9 @@ sink.o: sink.cpp meminfo.hpp
 
 meminfo.o: meminfo.cpp meminfo.hpp
 	g++ -c meminfo.cpp meminfo.hpp
+
+test: test.c
+	gcc test.c -o test
 	
 clean:
-	rm -f *.o *.gch source sink meminfo
+	rm -f *.o *.gch source sink meminfo test

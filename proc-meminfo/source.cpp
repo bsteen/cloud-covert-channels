@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission
-unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during transmission
-unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission
+unsigned long NULL_value = 0;	// A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission
+unsigned long ZERO = 0;			// MemFree value used to represent a zero during transmission
+unsigned long ONE = 0;			// MemFree value used to represent a one during transmission
 
-unsigned int hold_time = SEND_DELAY / 2;    // How many microseconds the source transmit a bit or "hold" a value in memory
+unsigned int hold_time = SEND_DELAY / 2;	// How many microseconds the source transmit a bit or "hold" a value in memory
 											// Also the amount of time a null value will be transmitted
 
 // Find FreeMem values that will represent null, zero, and one
@@ -25,6 +25,8 @@ void setup_channel(){
 		exit(1);
 	}
 
+	cout << "Hold time for bit is " << hold_time * 0.000001 << " sec" << endl;
+
 	// cout << "Calibration complete:\n\tNull value will be represented with " << NULL_value
 	// << "\n\tZero value is represented with " << ZERO << "\n\tOne value is represented with " << ONE << endl;
 
@@ -32,7 +34,6 @@ void setup_channel(){
 }
 
 // "Send" a bit by allocating a specific amount of memory, holding the allocation, and then freeing it
-// Average execution time:
 void send_bit(int bit){
 	unsigned int alloc_amount = 0;
 	void *memory_ptr;
@@ -47,7 +48,7 @@ void send_bit(int bit){
 	memory_ptr = malloc(alloc_amount);
 
 	if(memory_ptr == NULL){
-		cout << "Error; Could not allocation memory ("<< alloc_amount << " bytes)" << endl;
+		cout << "Error; Could not allocation memory (" << alloc_amount << " bytes)" << endl;
 	}
 	else{
 		usleep(hold_time);	// Time when the sink is detecting a bit
@@ -100,7 +101,7 @@ int main(){
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	send_start_seq();
-	send_data();
+	// send_data();
 	clock_gettime(CLOCK_MONOTONIC, &current);
 
 	elapsed_nano_sec = 1000000000UL * (current.tv_sec - start.tv_sec) + current.tv_nsec - start.tv_nsec;
