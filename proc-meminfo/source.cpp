@@ -1,6 +1,7 @@
 // source.cpp
 #include "meminfo.hpp"
 #include <iostream>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -25,7 +26,7 @@ void setup_channel(){
 		exit(1);
 	}
 
-	cout << "Hold time for bit is " << hold_time * 0.000001 << " sec" << endl;
+	cout << "Hold time for a bit is " << hold_time * 0.000001 << " sec" << endl;
 
 	// cout << "Calibration complete:\n\tNull value will be represented with " << NULL_value
 	// << "\n\tZero value is represented with " << ZERO << "\n\tOne value is represented with " << ONE << endl;
@@ -51,6 +52,7 @@ void send_bit(int bit){
 		cout << "Error; Could not allocation memory (" << alloc_amount << " bytes)" << endl;
 	}
 	else{
+		memset(memory_ptr, 'a', alloc_amount);	// Write to memory so system displays it as in use
 		usleep(hold_time);	// Time when the sink is detecting a bit
 		free(memory_ptr);
 		usleep(hold_time);	// Time when the sink is detecting a null value
@@ -109,7 +111,7 @@ int main(){
 	if(elapsed_nano_sec >= record_time){
 		cout << "\tChannel expired before source finished transmission!" << endl;
 	}
-	cout << "Source took " << elapsed_nano_sec / 1000000000.0  << " seconds to transmit data" << endl;
+	cout << "Source took " << elapsed_nano_sec / 1000000000.0  << " seconds to complete transmission." << endl;
 
 	cout << "END SOURCE PROGRAM" << endl;
 	return 0;

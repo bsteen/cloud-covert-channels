@@ -10,14 +10,14 @@ using namespace std;
 
 #define HIGH_BIT_ALLOC 200000   // Number of kB below baseline FreeMem for sink to detect a '1'
 #define LOW_BIT_ALLOC 100000    // Number of kB below FreeMem usage for sink to detect a '0'
-#define EXTRA_ALLOC_PER 10		// Extra amount of memory to alloc to compenstate for noise; A percentage of the HIGH/LOW_BIT_ALLOC
-#define CHANNEL_TIME  10        // Number of seconds the channel will be active; The channel is active when the sink is recording data
+#define DETECT_VARIANCE 0.1		// Percent over or under a memory value can be and still be detected as a 1 or 0
+#define CHANNEL_TIME  5			// Number of seconds the channel will be active; The channel is active when the sink is recording data
 #define CALIB_TIME 1            // Amount of seconds source/sink will spend calculating the average baseline memory usage before starting the channel
 #define CALIB_DELAY 100000      // Number of microseconds between each calibration recording; A smaller number means more calibration recordings will be made
-#define RECORD_DELAY 1000       // Number of microseconds between sink's recordings; A smaller number means sink will record more values of FreeMem
+#define RECORD_DELAY 100000		// Number of microseconds between sink's recordings; A smaller number means sink will record more values of FreeMem
 								// This number must be smaller than SEND_DELAY, or the sink WILL miss source transmissions
 #define SEND_DELAY 500000       // Number of microseconds between source's transmissions; A smaller number means source will send bits faster
-								// This value corresponds to how long the source keeps a piece of memory allocated
+								// This value is related to how long the source keeps a piece of memory allocated
 #define NUM_CONSEC_VAL 2        // Number of consecutive reading of the same type (1, 0, or null) that need to occur for a value to be recognized.
 
 vector<unsigned long> get_trans_readings(); //Used by sink
