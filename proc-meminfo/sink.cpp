@@ -6,15 +6,14 @@
 #include <unistd.h>
 
 vector<int> data;				// Recoreded data from the channel
-
 unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission 
 unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission
 
 unsigned long ZERO_UPPER = 0;	// Range of values that will be considered a 1 or 0
-unsigned long ZERO_LOWER = 0;
+// unsigned long ZERO_LOWER = 0;
 unsigned long ONE_UPPER = 0;
-unsigned long ONE_LOWER = 0;
+// unsigned long ONE_LOWER = 0;
 
 // Find FreeMem values that will represent null, zero, and one
 void setup_channel(){
@@ -24,21 +23,22 @@ void setup_channel(){
 	ZERO = NULL_value - LOW_BIT_ALLOC;
 	ONE = NULL_value - HIGH_BIT_ALLOC;
 
+
 	unsigned long var = (HIGH_BIT_ALLOC - LOW_BIT_ALLOC) * DETECT_VARIANCE;
 
-	ZERO_LOWER = ZERO - (var);
+	// ZERO_LOWER = ZERO - (var);
 	ZERO_UPPER = ZERO + (var);
-	ONE_LOWER = ONE - (var);
+	// ONE_LOWER = ONE - (var);
 	ONE_UPPER = ONE + (var);
 
-	if(ZERO_LOWER <= 0){
+	if(ONE <= 0){
 		cout << "System does not have enough free memory for the channel to run!" << endl;
 		cout << "END SINK PROGRAM" << endl;
 		exit(1);
 	}
 
 	printf("Calibration complete:\n\tNull value will be represented with %lu\n", NULL_value);
-	printf("\tZero value is represented with %lu [%lu, %lu]\n\tOne value is represented with %lu [%lu, %lu]\n", ZERO, ZERO_LOWER, ZERO_UPPER, ONE, ONE_LOWER, ONE_UPPER);
+	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [%lu, %lu]\n", ZERO, ZERO_UPPER, ONE, ONE_UPPER);
 
 	return;
 }
@@ -82,13 +82,13 @@ void convert_transmission(){
 	// Because this channel uses MemFree (amount of available memory left), NULL_value will the be the largest of the 3 numbers, ZERO will be smaller
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
 	for(int i = 0; i < trans_readings.size(); i++){
-		if(ONE_LOWER <= trans_readings[i] && trans_readings[i] <= ONE_UPPER && null_found){
-			cout << "Found 1 @" << trans_readings[i] << " kb" << endl;
+		if(trans_readings[i] <= ONE_UPPER && null_found){
+			printf("Found 1 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(1);
 			null_found = false;
 		}
-		else if(trans_readings[i] <= ZERO && null_found){
-			cout << "Found 0 @" << trans_readings[i] << " kb" << endl;
+		else if(trans_readings[i] <= ZERO_UPPER && null_found){
+			printf("Found 0 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(0);
 			null_found = false;
 		}
@@ -123,15 +123,15 @@ bool does_seq_match(int offset_index){
 // -1 is returned if the sequence isn't found
 int find_start_index(){
 	cout << "Looking for source's start sequence in recorded data..." << endl;
-	vector<int> source_sequence = get_source_sequence();
+	int source_sequence_size = get_source_sequence().size();
 
 	for(int i = 0; i < data.size(); i++){
-		if(source_sequence.size() + i > data.size()){
+		if(source_sequence_size + i > data.size()){
 			break;	// The data vector can not contain any more potentially matching sequences
 		}
 		else if(does_seq_match(i)){
 			cout << "\tFound starting sequence!" << endl;
-			return i;
+			return i + source_sequence_size;
 		}
 	}
 
