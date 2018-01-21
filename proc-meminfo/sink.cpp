@@ -1,8 +1,10 @@
 // sink.cpp
 #include "meminfo.hpp"
+#include <fstream>
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 vector<int> data;				// Recoreded data from the channel
@@ -10,10 +12,8 @@ unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. Mem
 unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission
 
-unsigned long ZERO_UPPER = 0;	// Range of values that will be considered a 1 or 0
-// unsigned long ZERO_LOWER = 0;
+unsigned long ZERO_UPPER = 0;	// Used for range of values that will be considered a 1 or 0
 unsigned long ONE_UPPER = 0;
-// unsigned long ONE_LOWER = 0;
 
 // Find FreeMem values that will represent null, zero, and one
 void setup_channel(){
@@ -26,9 +26,7 @@ void setup_channel(){
 
 	unsigned long var = (HIGH_BIT_ALLOC - LOW_BIT_ALLOC) * DETECT_VARIANCE;
 
-	// ZERO_LOWER = ZERO - (var);
 	ZERO_UPPER = ZERO + (var);
-	// ONE_LOWER = ONE - (var);
 	ONE_UPPER = ONE + (var);
 
 	if(ONE <= 0){
@@ -37,13 +35,13 @@ void setup_channel(){
 		exit(1);
 	}
 
-	printf("Calibration complete:\n\tNull value will be represented with %lu\n", NULL_value);
-	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [%lu, %lu]\n", ZERO, ZERO_UPPER, ONE, ONE_UPPER);
+	printf("Calibration complete:\n\tNull value will be represented with < %lu\n", ZERO_UPPER);
+	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [0, %lu]\n", ONE_UPPER + 1, ZERO_UPPER, ONE_UPPER);
 
 	return;
 }
 
-// Record value from meminfo for later analysis
+// Record FreeMem value from /proc/meminfo for later analysis
 void record_transmission(){
 	cout << "Recording source transmission now (" << CHANNEL_TIME << " seconds)..." << endl;
 
@@ -60,8 +58,29 @@ void record_transmission(){
 		clock_gettime(CLOCK_MONOTONIC, &current);
         elapsed_nano_sec = 1000000000UL * (current.tv_sec - start.tv_sec) + current.tv_nsec - start.tv_nsec;
 	}
-
 	cout << "\tDone recording transmission." << endl;
+
+	return;
+}
+
+// Write out the contents of trans_readings to a text file
+void write_out_raw_readings(){
+	cout << "Writing our recorded data..." << endl;
+	ofstream output_file;
+	output_file.open("sink_raw_recording.txt", ios::trunc);
+	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
+
+	for(int i = 0; i < trans_readings.size(); i++){
+		output_file << trans_readings[i] << endl;
+	}
+
+	output_file.close();
+	cout << "\tDone writing out data." << endl;
+
+	cout << "Create plot from data..." << endl;
+	system("python3 plot.py");
+	cout << "\tDone creating plot." << endl;
+
 	return;
 }
 
@@ -161,15 +180,17 @@ void readout_data(int index){
 }
 
 
-int main(){
+int main(int argc, char* argv[]){
 	cout << "START SINK PROGRAM" << endl;
 	
 	setup_channel();
 	record_transmission();
+	if(argc == 2 && strcmp(argv[1], "-o") == 0){
+		write_out_raw_readings();
+	}
 	convert_transmission();
 
 	int index = find_start_index();
-
 	if(index == -1){
 		cout << "END SINK PROGRAM" << endl;
 		exit(1);
