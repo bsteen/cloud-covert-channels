@@ -11,8 +11,8 @@ for line in data_file:
 	data.append(line)
 data_file.close()
 
-plt.axhline(y=data[0], color='r', linestyle='-')	#
-plt.axhline(y=data[1], color='b', linestyle='-')	# 
+plt.axhline(y=data[0], color='r', linestyle='-')	# ZERO_UPPER_LIMIT
+plt.axhline(y=data[1], color='b', linestyle='-')	# ONE_UPPER_LIMIT
 plt.plot(data[2:])
 
 plt.ylabel("FreeMem kb")
