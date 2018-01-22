@@ -2,16 +2,24 @@ import matplotlib.pyplot as plt
 
 data = []
 try:
-    data_file = open("sink_raw_recording.txt", "r")
+	data_file = open("FreeMem_data.txt", "r")
 except IOError:
-    exit(1)
+	print("\tCould not find FreeMem_data.txt")
+	exit(1)
 
 for line in data_file:
-    data.append(line)
+	data.append(line)
 data_file.close()
 
-plt.plot(data)
-plt.ylabel("FreeMeme kb")
+plt.axhline(y=data[0], color='r', linestyle='-')	#
+plt.axhline(y=data[1], color='b', linestyle='-')	# 
+plt.plot(data[2:])
+
+plt.ylabel("FreeMem kb")
 plt.xlabel("index #")
-plt.show()
+plt.title("FreeMem Data Recorded by Sink")
+
+plt.savefig("FreeMem_data.png")
+# plt.show()
+plt.close()
 exit(0)

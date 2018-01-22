@@ -23,4 +23,4 @@ test: test.c
 	gcc test.c -o test
 	
 clean:
-	rm -f *.o *.gch source sink meminfo test
+	rm -f *.o *.gch source sink meminfo test *.txt *.png

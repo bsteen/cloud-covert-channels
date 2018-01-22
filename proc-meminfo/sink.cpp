@@ -12,8 +12,9 @@ unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. Mem
 unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission
 
-unsigned long ZERO_UPPER = 0;	// Used for range of values that will be considered a 1 or 0
-unsigned long ONE_UPPER = 0;
+// Used for range of values that will be considered a 1 or 0
+unsigned long ZERO_UPPER_LIMIT = 0;		// The largest FreeMem value that will be considered a 0
+unsigned long ONE_UPPER_LIMIT = 0;		// The largest FreeMem value that will be considered a 1
 
 // Find FreeMem values that will represent null, zero, and one
 void setup_channel(){
@@ -23,11 +24,11 @@ void setup_channel(){
 	ZERO = NULL_value - LOW_BIT_ALLOC;
 	ONE = NULL_value - HIGH_BIT_ALLOC;
 
-
+	// DETECT_VARIANCE allows for some leniency in the detection of 1s and 0s
+	// If DETECT_VARIANCE is zero then ZERO_UPPER_LIMIT = ZERO and ONE_UPPER_LIMIT = ONE
 	unsigned long var = (HIGH_BIT_ALLOC - LOW_BIT_ALLOC) * DETECT_VARIANCE;
-
-	ZERO_UPPER = ZERO + (var);
-	ONE_UPPER = ONE + (var);
+	ZERO_UPPER_LIMIT = ZERO + (var);
+	ONE_UPPER_LIMIT = ONE + (var);
 
 	if(ONE <= 0){
 		cout << "System does not have enough free memory for the channel to run!" << endl;
@@ -35,8 +36,8 @@ void setup_channel(){
 		exit(1);
 	}
 
-	printf("Calibration complete:\n\tNull value will be represented with < %lu\n", ZERO_UPPER);
-	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [0, %lu]\n", ONE_UPPER + 1, ZERO_UPPER, ONE_UPPER);
+	printf("Calibration complete:\n\tNull value will be represented with >%lu\n", ZERO_UPPER_LIMIT);
+	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [0, %lu]\n", ONE_UPPER_LIMIT + 1, ZERO_UPPER_LIMIT, ONE_UPPER_LIMIT);
 
 	return;
 }
@@ -63,12 +64,17 @@ void record_transmission(){
 	return;
 }
 
-// Write out the contents of trans_readings to a text file
+// Write out the contents of trans_readings to a text file and has a python script plot it
+// Output file format has first 2 lines as threshold values; following numbers are the recordings
 void write_out_raw_readings(){
 	cout << "Writing our recorded data..." << endl;
 	ofstream output_file;
-	output_file.open("sink_raw_recording.txt", ios::trunc);
+	output_file.open("FreeMem_data.txt", ios::trunc);
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
+
+	// First 2 lines are the threshold values
+	output_file << ZERO_UPPER_LIMIT << endl;
+	output_file << ONE_UPPER_LIMIT << endl;
 
 	for(int i = 0; i < trans_readings.size(); i++){
 		output_file << trans_readings[i] << endl;
@@ -78,8 +84,12 @@ void write_out_raw_readings(){
 	cout << "\tDone writing out data." << endl;
 
 	cout << "Create plot from data..." << endl;
-	system("python3 plot.py");
-	cout << "\tDone creating plot." << endl;
+	if(system("python3 plot.py") == 0){
+		cout << "\tDone creating plot." << endl;
+	}
+	else{
+		cout << "\Error creating plot!" << endl;
+	}
 
 	return;
 }
@@ -101,19 +111,19 @@ void convert_transmission(){
 	// Because this channel uses MemFree (amount of available memory left), NULL_value will the be the largest of the 3 numbers, ZERO will be smaller
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
 	for(int i = 0; i < trans_readings.size(); i++){
-		if(trans_readings[i] <= ONE_UPPER && null_found){
+		if(trans_readings[i] <= ONE_UPPER_LIMIT && null_found){
 			printf("Found 1 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(1);
 			null_found = false;
 		}
-		else if(trans_readings[i] <= ZERO_UPPER && null_found){
+		else if(trans_readings[i] <= ZERO_UPPER_LIMIT && null_found){
 			printf("Found 0 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(0);
 			null_found = false;
 		}
 		else{
 			// Represents a null value (An "idle" value in between transmission of a 1 or 0)
-			// cout << "Found null @" << trans_readings[i] << " kb" << endl;
+			printf("Found null @%d (%lu kb)\n", i, trans_readings[i]);
 			null_found = true;
 		}
 	}
@@ -185,7 +195,7 @@ int main(int argc, char* argv[]){
 	
 	setup_channel();
 	record_transmission();
-	if(argc == 2 && strcmp(argv[1], "-o") == 0){
+	if(argc == 2 && strcmp(argv[1], "-p") == 0){	// Output the raw recordings to a text file and make a plot
 		write_out_raw_readings();
 	}
 	convert_transmission();
