@@ -11,13 +11,14 @@ for line in data_file:
 	data.append(line)
 data_file.close()
 
-plt.axhline(y=data[0], color='r', linestyle='-')	# ZERO_UPPER_LIMIT
-plt.axhline(y=data[1], color='b', linestyle='-')	# ONE_UPPER_LIMIT
-plt.plot(data[2:])
+plt.plot(data[2:], color="black", linestyle='-', label="FreeMem values")
+plt.axhline(y=data[0], color='red', linestyle='--', label="ZERO_UPPER_LIMIT")
+plt.axhline(y=data[1], color='blue', linestyle='--', label="ONE_UPPER_LIMIT")
 
 plt.ylabel("FreeMem kb")
 plt.xlabel("index #")
 plt.title("FreeMem Data Recorded by Sink")
+plt.legend(loc='upper right')
 
 plt.savefig("FreeMem_data.png")
 # plt.show()
