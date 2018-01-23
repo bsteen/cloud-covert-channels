@@ -17,8 +17,8 @@ using namespace std;
 
 #define RECORD_DELAY 10000		// Number of microseconds between sink's recordings; A smaller number means sink will record more values of FreeMem
 								// This number must be smaller than HOLD_TIME, or the sink WILL miss source transmissions
-#define HOLD_TIME 50000			// A smaller number means source will send bits faster; This value is related to how long the source keeps
-							    // a piece of memory allocated or unallocated in order to transmit a 1, 0, or null value
+#define HOLD_TIME 50000			// This value is related to how long the source keeps a piece of memory allocated or unallocated to transmit a 1, 0, or null value
+								// Double this value to get the the # of usecs between each transmission; A smaller HOLD_TIME means the source will send bits faster
 #define NUM_CONFIRMS 4			// Number of consecutive reading of the same value (1 or 0) that need to occur for a bit to be recognized
 								// This is related to the RECORD_DELAY and HOLD_TIME values; If you increase RECORD_DELAY, you should also increase this value
 

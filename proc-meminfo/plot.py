@@ -6,7 +6,6 @@ zero_y_indexes = []
 one_x_indexes = []
 one_y_indexes = []
 
-
 try:
     data_file = open("output/FreeMem_values.txt", "r")
 except IOError:
@@ -38,9 +37,9 @@ index_file.close()
 plt.axhline(y=y_data[0], color='red', linestyle='-', label="Zero Cutoff", zorder=1)
 plt.axhline(y=y_data[1], color='cyan', linestyle='-', label="One Cutoff", zorder=1)
 
-# Plots all readings
-plt.scatter(range(len(y_data)-4), y_data[4:], color="black", marker='.', label="FreeMem values", zorder=2)
+# Plots all readings as a line and as a scatter plot
 plt.plot(y_data[4:], color="black", linestyle='-', label="FreeMem plot", zorder=2)
+plt.scatter(range(len(y_data)-4), y_data[4:], color="black", marker='.', label="FreeMem values", zorder=2)
 
 # Plots detected values
 plt.scatter(zero_x_indexes, zero_y_indexes, color="red", marker='.', label="0 bit detected", zorder=3)
