@@ -36,13 +36,15 @@ void setup_channel(){
 		exit(1);
 	}
 
-	printf("Calibration complete:\n\tNull value will be represented with >%lu\n", ZERO_UPPER_LIMIT);
+	cout << "Calibration complete:" << endl << "\tRecording period is every " << RECORD_DELAY * 0.000001 << " seconds" << endl
+	<< "\tNull value will be represented with >" <<  ZERO_UPPER_LIMIT << endl;
 	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [0, %lu]\n", ONE_UPPER_LIMIT + 1, ZERO_UPPER_LIMIT, ONE_UPPER_LIMIT);
 
 	return;
 }
 
 // Record FreeMem value from /proc/meminfo for later analysis
+// FreeMem value is recorded every RECORD_DELAY seconds
 void record_transmission(){
 	cout << "Recording source transmission now (" << CHANNEL_TIME << " seconds)..." << endl;
 
@@ -80,17 +82,16 @@ void plot_data(){
 	return;
 }
 
-// Write out the contents of trans_readings to a text file
-// Output file format has first 2 lines as threshold values; following numbers are the recordings
+// Write out the contents of trans_readings to a text file (raw MemFree readings)
+// Output file format has first 2 lines as threshold values, following numbers are the recordings
 void write_out_raw_readings(){
-	cout << "Writing our recorded data..." << endl;
+	cout << "Writing our recorded data for plotting..." << endl;
 	ofstream output_file;
 	output_file.open("output/FreeMem_values.txt", ios::trunc);
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 
 	// First 2 lines are the threshold values
-	output_file << ZERO_UPPER_LIMIT << endl;
-	output_file << ONE_UPPER_LIMIT << endl;
+	output_file << ZERO_UPPER_LIMIT << endl << ONE_UPPER_LIMIT << endl;
 
 	for(int i = 0; i < trans_readings.size(); i++){
 		output_file << trans_readings[i] << endl;
@@ -108,19 +109,17 @@ void write_out_raw_readings(){
 // Stores these values in the vector "data"
 // If "write_out" is true, the indexes where 1's and 0's are detected will be written out to a file with the following format: <1 or 0> <index> <FreeMem value>
 // This ouput data is used to plot the channel data
-// TO IMPLEMENT: Use NUM_CONSEC_VAL to establish a "hold time" for 1's and 0's
-//				 This feature could potentially reduce transmission errors from noise, but would also increase transmission loss rate
 void convert_transmission(bool write_out){
 	cout << "Converting recorded meminfo values into 1's and 0's..." << endl;
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 
-	int zero_confirms = 0;	// NOT IMPLEMENTED YET
-	int one_confirms = 0;	// NOT IMPLEMENTED YET
+	int zero_confirms = 0;
+	int one_confirms = 0;
 	bool null_found = true;
 
 	ofstream indexes;
 	if(write_out){
-		cout << "\tAlso writing out detected value indexes..." << endl;
+		cout << "\tAlso writing out detected value indexes for plotting..." << endl;
 		indexes.open("output/One-Zero_indexes.txt", ios::trunc);
 	}
 
@@ -128,34 +127,56 @@ void convert_transmission(bool write_out){
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
 	for(int i = 0; i < trans_readings.size(); i++){
 		if(trans_readings[i] <= ONE_UPPER_LIMIT && null_found){
-			printf("\tFound 1 @%d (%lu kb)\n", i, trans_readings[i]);
-			data.push_back(1);
-			null_found = false;
+			one_confirms++;
+			zero_confirms = 0;
 
-			if(write_out){
-				indexes << 1 << " " << i << " " << trans_readings[i] << endl;
+			if(one_confirms >= NUM_CONFIRMS){
+				// printf("\tFound 1 @%d (%lu kb)\n", i, trans_readings[i]);
+
+				data.push_back(1);
+				one_confirms = 0;
+				null_found = false;
+
+				if(write_out){
+					indexes << 1 << " " << i << " " << trans_readings[i] << endl;
+				}
 			}
 		}
 		else if(trans_readings[i] <= ZERO_UPPER_LIMIT && null_found){
-			printf("\tFound 0 @%d (%lu kb)\n", i, trans_readings[i]);
-			data.push_back(0);
-			null_found = false;
+			zero_confirms++;
+			one_confirms = 0;
+			
+			if(zero_confirms >= NUM_CONFIRMS){
+				// printf("\tFound 0 @%d (%lu kb)\n", i, trans_readings[i]);
 
-			if(write_out){
-				indexes << 0 << " " << i << " " << trans_readings[i] << endl;
+				data.push_back(0);
+				zero_confirms = 0;
+				null_found = false;
+
+				if(write_out){
+					indexes << 0 << " " << i << " " << trans_readings[i] << endl;
+				}
 			}
 		}
 		else if(trans_readings[i] > ZERO_UPPER_LIMIT){ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
-			printf("\tFound null @%d (%lu kb)\n", i, trans_readings[i]);
+			// printf("\tFound null @%d (%lu kb)\n", i, trans_readings[i]);
+
+			zero_confirms = 0;
+			one_confirms = 0;
 			null_found = true;
 		}
-		// else{
-		// 	// This iteration contains duplicate information; Ignore it
-		// }
+		else{
+			// This iteration contains a reading for a bit that already has been confirmed
+			// Ignore this information
+		}
 	}
 
 	if(write_out){
 		indexes.close();
+	}
+
+	if(write_out){
+		cout << "\tDone writing out indexes." << endl;
 	}
 
 	cout << "\tDone conversion." << endl;

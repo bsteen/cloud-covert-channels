@@ -34,17 +34,22 @@ for line in index_file:
         one_y_indexes.append(int(list[2].strip()))
 index_file.close()
 
-# plt.scatter(range(len(y_data)-2), y_data[2:], color="black", marker='.', label="FreeMem values")
-plt.plot(y_data[2:], color="black", linestyle='-', label="FreeMem values")
-plt.scatter(zero_x_indexes, zero_y_indexes, color="red", marker='.', label="0 bit detected")
-plt.scatter(one_x_indexes, one_y_indexes, color="blue", marker='.', label="1 bit detected")
-plt.axhline(y=y_data[0], color='red', linestyle='-', label="Zero Cutoff")
-plt.axhline(y=y_data[1], color='blue', linestyle='-', label="One Cutoff")
+# Plots Cutoff lines
+plt.axhline(y=y_data[0], color='red', linestyle='-', label="Zero Cutoff", zorder=1)
+plt.axhline(y=y_data[1], color='cyan', linestyle='-', label="One Cutoff", zorder=1)
+
+# Plots all readings
+plt.scatter(range(len(y_data)-2), y_data[2:], color="black", marker='.', label="FreeMem values", zorder=2)
+plt.plot(y_data[2:], color="black", linestyle='-', label="FreeMem plot", zorder=2)
+
+# Plots detected values
+plt.scatter(zero_x_indexes, zero_y_indexes, color="red", marker='.', label="0 bit detected", zorder=3)
+plt.scatter(one_x_indexes, one_y_indexes, color="cyan", marker='.', label="1 bit detected", zorder=3)
 
 plt.xlabel("index #")
-plt.ylabel("FreeMem kB")
+plt.ylabel("FreeMem (kB)")
 plt.title("FreeMem Values Recorded by Sink")
-plt.legend(loc='upper right')
+# plt.legend(loc='lower right')
 
 plt.savefig("output/FreeMem_graph.png")
 # plt.show()

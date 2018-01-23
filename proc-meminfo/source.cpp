@@ -14,7 +14,7 @@ unsigned int hold_time = SEND_DELAY / 2;	// How many microseconds the source tra
 
 // Find FreeMem values that will represent null, zero, and one
 void setup_channel(){
-	cout << "Running channel calibration (" << CALIB_TIME << " seconds)..." << endl;
+	cout << "Running channel calibration (" << CALIB_TIME << " second(s))..." << endl;
 
 	NULL_value = do_channel_calibartion();	// Run the channel calibration function
 	ZERO = NULL_value - LOW_BIT_ALLOC;
@@ -26,10 +26,7 @@ void setup_channel(){
 		exit(1);
 	}
 
-	cout << "Hold time for a bit is " << hold_time * 0.000001 << " sec" << endl;
-
-	// cout << "Calibration complete:\n\tNull value will be represented with " << NULL_value
-	// << "\n\tZero value is represented with " << ZERO << "\n\tOne value is represented with " << ONE << endl;
+	cout << "\tHold time for a bit is " << hold_time * 0.000001 << " seconds" << endl << "Calibration complete." << endl;
 
 	return;
 }
@@ -99,6 +96,7 @@ int main(){
 	unsigned long record_time = CHANNEL_TIME * 1000000000UL;
 
 	setup_channel();
+	cout << "Channel is set to be active for " << CHANNEL_TIME << " second(s)." << endl;
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	send_start_seq();
