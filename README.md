@@ -15,4 +15,5 @@ from the sender or re-count the same transmission one or more times.
 An attempt to create a covert channel using /proc/interrupts. Channel not completed.  
 
 **proc-meminfo**  
-Covert channel using /proc/meminfo. Channel development in progress.  
+Covert channel using /proc/meminfo. Channel development in progress. Sink should be started slightly
+before the source is started. The sink can be run with a "-p" argument to have the recorded data plotted and saved as an image.
