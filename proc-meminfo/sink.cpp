@@ -36,7 +36,9 @@ void setup_channel(){
 		exit(1);
 	}
 
-	cout << "Calibration complete:" << endl << "\tRecording period is every " << RECORD_DELAY * 0.000001 << " seconds" << endl
+	cout << "Calibration complete:" << endl
+	<< "\tRecording period is every " << RECORD_DELAY * 0.000001 << " seconds" << endl
+	<< "\tDetection leniency is within " << 100 * DETECT_VARIANCE << "% of nominal value." << endl
 	<< "\tNull value will be represented with >" <<  ZERO_UPPER_LIMIT << endl;
 	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [0, %lu]\n", ONE_UPPER_LIMIT + 1, ZERO_UPPER_LIMIT, ONE_UPPER_LIMIT);
 
@@ -66,32 +68,18 @@ void record_transmission(){
 	return;
 }
 
-// Runs after write_out_raw_readings() and convert_transmission() have outputted their data
-// to text files. Runs the python script that plots the channel data
-// Only runs when the sink is passed "-p" as an argument
-void plot_data(){
-	cout << "Creating plot from data..." << endl;
-
-	if(system("python3 plot.py") == 0){
-		cout << "\tDone creating plot." << endl;
-	}
-	else{
-		cout << "\tError creating plot!" << endl;
-	}
-
-	return;
-}
-
 // Write out the contents of trans_readings to a text file (raw MemFree readings)
-// Output file format has first 2 lines as threshold values, following numbers are the recordings
+// Output file format has first lines as threshold values, HOLD_TIME, CHANNEL_TIME
+// The following numbers are the recordings
 void write_out_raw_readings(){
 	cout << "Writing our recorded data for plotting..." << endl;
+	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 	ofstream output_file;
 	output_file.open("output/FreeMem_values.txt", ios::trunc);
-	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 
-	// First 2 lines are the threshold values
-	output_file << ZERO_UPPER_LIMIT << endl << ONE_UPPER_LIMIT << endl;
+	// Threshold values, HOLD_TIME, CHANNEL_TIME
+	output_file << ZERO_UPPER_LIMIT << endl << ONE_UPPER_LIMIT << endl
+	<< HOLD_TIME << endl << CHANNEL_TIME << endl;
 
 	for(int i = 0; i < trans_readings.size(); i++){
 		output_file << trans_readings[i] << endl;
@@ -183,6 +171,22 @@ void convert_transmission(bool write_out){
 	return;
 }
 
+// Runs after write_out_raw_readings() and convert_transmission() have outputted their data
+// to text files. Runs the python script that plots the channel data
+// Only runs when the sink is passed "-p" as an argument
+void plot_data(){
+	cout << "Creating plot from data..." << endl;
+
+	if(system("python3 plot.py") == 0){
+		cout << "\tDone creating plot." << endl;
+	}
+	else{
+		cout << "\tError creating plot!" << endl;
+	}
+
+	return;
+}
+
 // Helper function used by find_start_index()
 // Compares source_sequence with a sequence from data using an offset index
 // Does not do out-of-bounds-checking on the data vector; Assumes caller does this check
@@ -219,24 +223,16 @@ int find_start_index(){
 	return -1;
 }
 
-// Prints out the data from the transmission in 8 bit chunks
-// This is all ones and zeros starting right after the source's start sequence
-void readout_data(int index){
-	cout << "Reading out received data now..." << endl;
+// Prints out the data from the transmission
+// This is all the ones and zeros starting right after the source's start sequence
+void readout_data(int start_index){
+	cout << "Reading out received data now..." << endl << "\t";
 
-	int newline_count = 0;
-
-	for(int i = index; i < data.size(); i++){
+	for(int i = start_index; i < data.size(); i++){
 		cout << data[i];
-		newline_count++;
-
-		if(newline_count >= 8){
-			cout << endl;
-			newline_count = 0;
-		}
 	}
 
-	cout << endl << "Done reading out data." << endl;
+	cout << endl << "\tDone reading out data." << endl;
 	return;
 }
 

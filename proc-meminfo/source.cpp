@@ -9,9 +9,6 @@ unsigned long NULL_value = 0;	// A copy of base_mem_free from meminfo.cpp. MemFr
 unsigned long ZERO = 0;			// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;			// MemFree value used to represent a one during transmission
 
-unsigned int hold_time = SEND_DELAY / 2;	// How many microseconds the source transmit a bit or "hold" a value in memory
-											// Also the amount of time a null value will be transmitted
-
 // Find FreeMem values that will represent null, zero, and one
 void setup_channel(){
 	cout << "Running channel calibration (" << CALIB_TIME << " second(s))..." << endl;
@@ -26,7 +23,7 @@ void setup_channel(){
 		exit(1);
 	}
 
-	cout << "\tHold time for a bit is " << hold_time * 0.000001 << " seconds" << endl << "Calibration complete." << endl;
+	cout << "\tHold time for a bit is " << HOLD_TIME * 0.000001 << " seconds" << endl << "Calibration complete." << endl;
 
 	return;
 }
@@ -50,9 +47,9 @@ void send_bit(int bit){
 	}
 	else{
 		memset(memory_ptr, 'a', alloc_amount);	// Write to memory so system displays it as in use
-		usleep(hold_time);	// Time when the sink is detecting a bit
+		usleep(HOLD_TIME);	// Time when the sink is detecting a bit
 		free(memory_ptr);
-		usleep(hold_time);	// Time when the sink is detecting a null value
+		usleep(HOLD_TIME);	// Time when the sink is detecting a null value
 	}
 
 	return;
@@ -76,15 +73,16 @@ void send_start_seq(){
 // Source must send all of its data within CHANNEL_TIME seconds
 // Right now, the source just sends an alternating pattern of 1's and 0's
 void send_data(){
-	cout << "Source sending data now..." << endl;
+	cout << "Source sending data now..." << endl << "\t";
 
-	int bit = 1;
-	for(int i = 0; i < 100; i++){
+	int bit = 0;
+	for(int i = 0; i < 10; i++){
+		cout << bit;
 		send_bit(bit);
 		bit = !bit;
 	}
 
-	cout << "\tDone sending transmission." << endl;
+	cout << endl << "\tDone sending transmission." << endl;
 	return;
 
 }
@@ -100,7 +98,7 @@ int main(){
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	send_start_seq();
-	// send_data();
+	send_data();
 	clock_gettime(CLOCK_MONOTONIC, &current);
 
 	elapsed_nano_sec = 1000000000UL * (current.tv_sec - start.tv_sec) + current.tv_nsec - start.tv_nsec;
