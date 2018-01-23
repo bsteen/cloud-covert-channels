@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 vector<int> data;				// Recoreded data from the channel
-unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission 
+unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission
 unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission
 
@@ -66,6 +66,7 @@ void record_transmission(){
 
 // Runs after write_out_raw_readings() and convert_transmission() have outputted their data
 // to text files. Runs the python script that plots the channel data
+// Only runs when the sink is passed "-p" as an argument
 void plot_data(){
 	cout << "Creating plot from data..." << endl;
 
@@ -101,21 +102,22 @@ void write_out_raw_readings(){
 	return;
 }
 
-// Converts the raw MemFree kB values stored trans_readings into 1's and 0's
-// A "null value" was be found between a bit for it to be recognized
-// This prevents two simultaneous bits with the same value from being seen as one bit
-// Stores these values in the vector "data". If "write_out" is true, the indexes where 1's and 0's
-// are detected will be written out to a file with the following format: <1 or 0> <index> <FreeMem value>. This is used to plot the channel data.
+// Converts the raw MemFree values stored trans_readings into 1's and 0's
+// A "null value" must be found between a transmission and the next one for it to be recognized
+// This prevents two simultaneous bits from being seen as tranmission or double counted
+// Stores these values in the vector "data"
+// If "write_out" is true, the indexes where 1's and 0's are detected will be written out to a file with the following format: <1 or 0> <index> <FreeMem value>
+// This ouput data is used to plot the channel data
 // TO IMPLEMENT: Use NUM_CONSEC_VAL to establish a "hold time" for 1's and 0's
-//				 This feature could reduce transmission errors from noise, but would also increase transmission loss rate
+//				 This feature could potentially reduce transmission errors from noise, but would also increase transmission loss rate
 void convert_transmission(bool write_out){
-	cout << "Coverting recorded meminfo values into 1's and 0's..." << endl;
+	cout << "Converting recorded meminfo values into 1's and 0's..." << endl;
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 
 	int zero_confirms = 0;	// NOT IMPLEMENTED YET
 	int one_confirms = 0;	// NOT IMPLEMENTED YET
 	bool null_found = true;
-	
+
 	ofstream indexes;
 	if(write_out){
 		cout << "\tAlso writing out detected value indexes..." << endl;
@@ -126,25 +128,30 @@ void convert_transmission(bool write_out){
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
 	for(int i = 0; i < trans_readings.size(); i++){
 		if(trans_readings[i] <= ONE_UPPER_LIMIT && null_found){
-			printf("Found 1 @%d (%lu kb)\n", i, trans_readings[i]);
+			printf("\tFound 1 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(1);
 			null_found = false;
+
 			if(write_out){
 				indexes << 1 << " " << i << " " << trans_readings[i] << endl;
 			}
 		}
 		else if(trans_readings[i] <= ZERO_UPPER_LIMIT && null_found){
-			printf("Found 0 @%d (%lu kb)\n", i, trans_readings[i]);
+			printf("\tFound 0 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(0);
 			null_found = false;
+
 			if(write_out){
 				indexes << 0 << " " << i << " " << trans_readings[i] << endl;
 			}
 		}
-		else{ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
-			// printf("Found null @%d (%lu kb)\n", i, trans_readings[i]);
+		else if(trans_readings[i] > ZERO_UPPER_LIMIT){ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
+			printf("\tFound null @%d (%lu kb)\n", i, trans_readings[i]);
 			null_found = true;
 		}
+		// else{
+		// 	// This iteration contains duplicate information; Ignore it
+		// }
 	}
 
 	if(write_out){
@@ -166,7 +173,7 @@ bool does_seq_match(int offset_index){
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -220,7 +227,7 @@ int main(int argc, char* argv[]){
 	record_transmission();
 
 	// Output the raw recordings to a text file and make a plot
-	if(argc == 2 && strcmp(argv[1], "-p") == 0){	
+	if(argc == 2 && strcmp(argv[1], "-p") == 0){
 		write_out_raw_readings();
 		convert_transmission(true);
 		plot_data();
@@ -228,7 +235,7 @@ int main(int argc, char* argv[]){
 	else{
 		convert_transmission(false);
 	}
-	
+
 	int index = find_start_index();
 	if(index == -1){
 		cout << "END SINK PROGRAM" << endl;

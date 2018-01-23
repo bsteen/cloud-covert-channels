@@ -82,7 +82,6 @@ void send_data(){
 	cout << "Source sending data now..." << endl;
 
 	int bit = 1;
-
 	for(int i = 0; i < 100; i++){
 		send_bit(bit);
 		bit = !bit;

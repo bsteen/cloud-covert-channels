@@ -18,7 +18,7 @@ using namespace std;
 								// This number must be smaller than SEND_DELAY, or the sink WILL miss source transmissions
 #define SEND_DELAY 1000000		// Number of microseconds between source's transmissions; A smaller number means source will send bits faster
 								// This value is related to how long the source keeps a piece of memory allocated
-#define NUM_CONSEC_VAL 2        // Number of consecutive reading of the same type (1, 0, or null) that need to occur for a value to be recognized.
+#define NUM_CONFIRMS 2			// Number of consecutive reading of the same type (1, 0, or null) that need to occur for a value to be recognized
 
 vector<unsigned long> get_trans_readings(); //Used by sink
 vector<int> get_source_sequence();      // Used by source and sink
