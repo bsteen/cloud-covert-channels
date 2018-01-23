@@ -64,12 +64,27 @@ void record_transmission(){
 	return;
 }
 
-// Write out the contents of trans_readings to a text file and has a python script plot it
+// Runs after write_out_raw_readings() and convert_transmission() have outputted their data
+// to text files. Runs the python script that plots the channel data
+void plot_data(){
+	cout << "Creating plot from data..." << endl;
+
+	if(system("python3 plot.py") == 0){
+		cout << "\tDone creating plot." << endl;
+	}
+	else{
+		cout << "\tError creating plot!" << endl;
+	}
+
+	return;
+}
+
+// Write out the contents of trans_readings to a text file
 // Output file format has first 2 lines as threshold values; following numbers are the recordings
 void write_out_raw_readings(){
 	cout << "Writing our recorded data..." << endl;
 	ofstream output_file;
-	output_file.open("FreeMem_data.txt", ios::trunc);
+	output_file.open("output/FreeMem_values.txt", ios::trunc);
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 
 	// First 2 lines are the threshold values
@@ -83,30 +98,29 @@ void write_out_raw_readings(){
 	output_file.close();
 	cout << "\tDone writing out data." << endl;
 
-	cout << "Create plot from data..." << endl;
-	if(system("python3 plot.py") == 0){
-		cout << "\tDone creating plot." << endl;
-	}
-	else{
-		cout << "\Error creating plot!" << endl;
-	}
-
 	return;
 }
 
 // Converts the raw MemFree kB values stored trans_readings into 1's and 0's
 // A "null value" was be found between a bit for it to be recognized
 // This prevents two simultaneous bits with the same value from being seen as one bit
-// Stores these values in the vector "data"
+// Stores these values in the vector "data". If "write_out" is true, the indexes where 1's and 0's
+// are detected will be written out to a file with the following format: <1 or 0> <index> <FreeMem value>. This is used to plot the channel data.
 // TO IMPLEMENT: Use NUM_CONSEC_VAL to establish a "hold time" for 1's and 0's
 //				 This feature could reduce transmission errors from noise, but would also increase transmission loss rate
-void convert_transmission(){
+void convert_transmission(bool write_out){
 	cout << "Coverting recorded meminfo values into 1's and 0's..." << endl;
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 
 	int zero_confirms = 0;	// NOT IMPLEMENTED YET
 	int one_confirms = 0;	// NOT IMPLEMENTED YET
 	bool null_found = true;
+	
+	ofstream indexes;
+	if(write_out){
+		cout << "\tAlso writing out detected value indexes..." << endl;
+		indexes.open("output/One-Zero_indexes.txt", ios::trunc);
+	}
 
 	// Because this channel uses MemFree (amount of available memory left), NULL_value will the be the largest of the 3 numbers, ZERO will be smaller
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
@@ -115,17 +129,26 @@ void convert_transmission(){
 			printf("Found 1 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(1);
 			null_found = false;
+			if(write_out){
+				indexes << 1 << " " << i << " " << trans_readings[i] << endl;
+			}
 		}
 		else if(trans_readings[i] <= ZERO_UPPER_LIMIT && null_found){
 			printf("Found 0 @%d (%lu kb)\n", i, trans_readings[i]);
 			data.push_back(0);
 			null_found = false;
+			if(write_out){
+				indexes << 0 << " " << i << " " << trans_readings[i] << endl;
+			}
 		}
-		else{
-			// Represents a null value (An "idle" value in between transmission of a 1 or 0)
-			printf("Found null @%d (%lu kb)\n", i, trans_readings[i]);
+		else{ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
+			// printf("Found null @%d (%lu kb)\n", i, trans_readings[i]);
 			null_found = true;
 		}
+	}
+
+	if(write_out){
+		indexes.close();
 	}
 
 	cout << "\tDone conversion." << endl;
@@ -192,14 +215,20 @@ void readout_data(int index){
 
 int main(int argc, char* argv[]){
 	cout << "START SINK PROGRAM" << endl;
-	
+
 	setup_channel();
 	record_transmission();
-	if(argc == 2 && strcmp(argv[1], "-p") == 0){	// Output the raw recordings to a text file and make a plot
-		write_out_raw_readings();
-	}
-	convert_transmission();
 
+	// Output the raw recordings to a text file and make a plot
+	if(argc == 2 && strcmp(argv[1], "-p") == 0){	
+		write_out_raw_readings();
+		convert_transmission(true);
+		plot_data();
+	}
+	else{
+		convert_transmission(false);
+	}
+	
 	int index = find_start_index();
 	if(index == -1){
 		cout << "END SINK PROGRAM" << endl;
