@@ -13,10 +13,10 @@ unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during tran
 unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission
 
 // Used for range of values that will be considered a 1 or 0
-unsigned long ZERO_UPPER_LIMIT = 0;		// The largest FreeMem value that will be considered a 0
-unsigned long ONE_UPPER_LIMIT = 0;		// The largest FreeMem value that will be considered a 1
+unsigned long ZERO_UPPER_LIMIT = 0;		// The largest MemFree value that will be considered a 0
+unsigned long ONE_UPPER_LIMIT = 0;		// The largest MemFree value that will be considered a 1
 
-// Find FreeMem values that will represent null, zero, and one
+// Find MemFree values that will represent null, zero, and one
 void setup_channel(){
 	cout << "Running channel calibration (" << CALIB_TIME << " seconds)..." << endl;
 
@@ -45,8 +45,8 @@ void setup_channel(){
 	return;
 }
 
-// Record FreeMem value from /proc/meminfo for later analysis
-// FreeMem value is recorded every RECORD_DELAY seconds
+// Record MemFree value from /proc/meminfo for later analysis
+// MemFree value is recorded every RECORD_DELAY seconds
 void record_transmission(){
 	cout << "Recording source transmission now (" << CHANNEL_TIME << " seconds)..." << endl;
 
@@ -57,7 +57,7 @@ void record_transmission(){
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	while(elapsed_nano_sec < record_time){
-		record_trans_reading();		// Record current value of FreeMem
+		record_trans_reading();		// Record current value of MemFree
 		usleep(RECORD_DELAY);		// Wait this many microseconds before recording again
 
 		clock_gettime(CLOCK_MONOTONIC, &current);
@@ -75,7 +75,7 @@ void write_out_raw_readings(){
 	cout << "Writing our recorded data for plotting..." << endl;
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 	ofstream output_file;
-	output_file.open("output/FreeMem_values.txt", ios::trunc);
+	output_file.open("output/MemFree_values.txt", ios::trunc);
 
 	// Threshold values, HOLD_TIME, CHANNEL_TIME
 	output_file << ZERO_UPPER_LIMIT << endl << ONE_UPPER_LIMIT << endl
@@ -95,17 +95,16 @@ void write_out_raw_readings(){
 // A "null value" must be found between a transmission and the next one for it to be recognized
 // This prevents two simultaneous bits from being seen as tranmission or double counted
 // Stores these values in the vector "data"
-// If "write_out" is true, the indexes where 1's and 0's are detected will be written out to a file with the following format: <1 or 0> <index> <FreeMem value>
+// If "write_out" is true, the indexes where 1's and 0's are detected will be written out to a file with the following format: <1 or 0> <index> <MemFree value>
 // This ouput data is used to plot the channel data
 void convert_transmission(bool write_out){
 	cout << "Converting recorded meminfo values into 1's and 0's..." << endl;
+	
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
-
-	int zero_confirms = 0;
-	int one_confirms = 0;
-	bool null_found = true;
-
+	unsigned long peak_value = NULL_value;
+	int peak_value_index = 0;
 	ofstream indexes;
+	
 	if(write_out){
 		cout << "\tAlso writing out detected value indexes for plotting..." << endl;
 		indexes.open("output/One-Zero_indexes.txt", ios::trunc);
@@ -114,48 +113,33 @@ void convert_transmission(bool write_out){
 	// Because this channel uses MemFree (amount of available memory left), NULL_value will the be the largest of the 3 numbers, ZERO will be smaller
 	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
 	for(int i = 0; i < trans_readings.size(); i++){
-		if(trans_readings[i] <= ONE_UPPER_LIMIT && null_found){
-			one_confirms++;
-			zero_confirms = 0;
-
-			if(one_confirms >= NUM_CONFIRMS){
-				// printf("\tFound 1 @%d (%lu kb)\n", i, trans_readings[i]);
-
-				data.push_back(1);
-				one_confirms = 0;
-				null_found = false;
-
-				if(write_out){
-					indexes << 1 << " " << i << " " << trans_readings[i] << endl;
-				}
-			}
-		}
-		else if(trans_readings[i] <= ZERO_UPPER_LIMIT && null_found){
-			zero_confirms++;
-			one_confirms = 0;
-			
-			if(zero_confirms >= NUM_CONFIRMS){
-				// printf("\tFound 0 @%d (%lu kb)\n", i, trans_readings[i]);
-
-				data.push_back(0);
-				zero_confirms = 0;
-				null_found = false;
-
-				if(write_out){
-					indexes << 0 << " " << i << " " << trans_readings[i] << endl;
-				}
-			}
-		}
-		else if(trans_readings[i] > ZERO_UPPER_LIMIT){ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
+		if(trans_readings[i] > ZERO_UPPER_LIMIT){ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
 			// printf("\tFound null @%d (%lu kb)\n", i, trans_readings[i]);
+			
+			// Determine if minimum value of last peak was a 1 or 0; Check max value after bottom of peak is detected
+			if(i > 0 && trans_readings[i - 1] <= ZERO_UPPER_LIMIT){
+				if(peak_value <= ONE_UPPER_LIMIT){
+					printf("\tFound 1 @%d (%lu kB)\n", peak_value_index, peak_value);
+					data.push_back(1);
 
-			zero_confirms = 0;
-			one_confirms = 0;
-			null_found = true;
+					if(write_out){
+						indexes << 1 << " " << peak_value_index << " " << peak_value << endl;
+					}
+				}
+				else{ // ONE_UPPER_LIMIT < peak_value <= ZERO_UPPER_LIMIT
+					printf("\tFound 0 @%d (%lu kB)\n", peak_value_index, peak_value);
+					data.push_back(0);
+		
+					if(write_out){
+						indexes << 0 << " " << peak_value_index << " " << peak_value << endl;
+					}
+				}
+				peak_value = NULL_value;
+			}
 		}
-		else{
-			// This iteration contains a reading for a bit that already has been confirmed
-			// Ignore this information
+		else if(trans_readings[i] < peak_value){
+			peak_value = trans_readings[i];
+			peak_value_index = i;
 		}
 	}
 
