@@ -37,10 +37,10 @@ void setup_channel(){
 	}
 
 	cout << "Calibration complete:" << endl
-	<< "\tRecording period is every " << RECORD_DELAY * 0.000001 << " seconds" << endl
-	<< "\tDetection leniency is within " << 100 * DETECT_VARIANCE << "% of nominal value." << endl
-	<< "\tNull value will be represented with >" <<  ZERO_UPPER_LIMIT << endl;
-	printf("\tZero value is represented with [%lu, %lu]\n\tOne value is represented with [0, %lu]\n", ONE_UPPER_LIMIT + 1, ZERO_UPPER_LIMIT, ONE_UPPER_LIMIT);
+	<< "\tRecording period is every " << RECORD_DELAY * 0.000001 << " seconds." << endl
+	<< "\tDetection leniency is ±" << 100 * DETECT_VARIANCE << "% of nominal values." << endl
+	<< "\tNull value will be represented with >" <<  ZERO_UPPER_LIMIT << " kB." << endl;
+	printf("\tZero value is represented with [%lu, %lu] kB.\n\tOne value is represented with [0, %lu] kB.\n", ONE_UPPER_LIMIT + 1, ZERO_UPPER_LIMIT, ONE_UPPER_LIMIT);
 
 	return;
 }
@@ -78,7 +78,7 @@ void write_out_raw_readings(){
 	output_file.open("output/MemFree_values.txt", ios::trunc);
 
 	// Threshold values, HOLD_TIME, CHANNEL_TIME
-	output_file << ZERO_UPPER_LIMIT << endl << ONE_UPPER_LIMIT << endl
+	output_file << ZERO << endl << ZERO_UPPER_LIMIT << endl << ONE << endl << ONE_UPPER_LIMIT << endl
 	<< HOLD_TIME << endl << CHANNEL_TIME << endl;
 
 	for(int i = 0; i < trans_readings.size(); i++){
@@ -98,7 +98,7 @@ void write_out_raw_readings(){
 // If "write_out" is true, the indexes where 1's and 0's are detected will be written out to a file with the following format: <1 or 0> <index> <MemFree value>
 // This ouput data is used to plot the channel data
 void convert_transmission(bool write_out){
-	cout << "Converting recorded meminfo values into 1's and 0's..." << endl;
+	cout << "Converting recorded MemFree values into 1's and 0's..." << endl;
 	
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
 	unsigned long peak_value = NULL_value;
