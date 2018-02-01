@@ -6,18 +6,14 @@ source: source.o meminfo.o
 sink: sink.o meminfo.o
 	g++ sink.o meminfo.o -o sink
 
-# For testing
-# meminfo: meminfo.o
-# 	g++ meminfo.o -o meminfo
-
 source.o: source.cpp meminfo.hpp
-	g++ -c source.cpp
+	g++ -c source.cpp 
 
 sink.o: sink.cpp meminfo.hpp
 	g++ -c sink.cpp
 
 meminfo.o: meminfo.cpp meminfo.hpp
-	g++ -c meminfo.cpp meminfo.hpp
+	g++ -c meminfo.cpp
 
 test: test.c
 	gcc test.c -o test

@@ -104,7 +104,7 @@ int main(){
 	elapsed_nano_sec = 1000000000UL * (current.tv_sec - start.tv_sec) + current.tv_nsec - start.tv_nsec;
 
 	if(elapsed_nano_sec >= record_time){
-		cout << "\tChannel expired before source finished transmission!" << endl;
+		cout << "ERROR: Channel expired before source finished transmission!" << endl;
 	}
 	cout << "Source took " << elapsed_nano_sec / 1000000000.0  << " seconds to complete transmission." << endl;
 

@@ -119,7 +119,7 @@ void convert_transmission(bool write_out){
 			// Determine if minimum value of last peak was a 1 or 0; Check max value after bottom of peak is detected
 			if(i > 0 && trans_readings[i - 1] <= ZERO_UPPER_LIMIT){
 				if(peak_value <= ONE_UPPER_LIMIT){
-					printf("\tFound 1 @%d (%lu kB)\n", peak_value_index, peak_value);
+					// printf("\tFound 1 @%d (%lu kB)\n", peak_value_index, peak_value);
 					data.push_back(1);
 
 					if(write_out){
@@ -127,7 +127,7 @@ void convert_transmission(bool write_out){
 					}
 				}
 				else{ // ONE_UPPER_LIMIT < peak_value <= ZERO_UPPER_LIMIT
-					printf("\tFound 0 @%d (%lu kB)\n", peak_value_index, peak_value);
+					// printf("\tFound 0 @%d (%lu kB)\n", peak_value_index, peak_value);
 					data.push_back(0);
 		
 					if(write_out){
