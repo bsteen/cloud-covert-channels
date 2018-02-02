@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define NUM_BITS_TO_SEND 10		// Number of data bits the source will to the sink, NOT including the start sequence
+
 unsigned long NULL_value = 0;	// A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission
 unsigned long ZERO = 0;			// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;			// MemFree value used to represent a one during transmission
@@ -76,7 +78,7 @@ void send_data(){
 	cout << "Source sending data now..." << endl << "\t";
 
 	int bit = 0;
-	for(int i = 0; i < 10; i++){
+	for(int i = 0; i < NUM_BITS_TO_SEND; i++){
 		cout << bit;
 		send_bit(bit);
 		bit = !bit;
@@ -106,7 +108,11 @@ int main(){
 	if(elapsed_nano_sec >= record_time){
 		cout << "ERROR: Channel expired before source finished transmission!" << endl;
 	}
-	cout << "Source took " << elapsed_nano_sec / 1000000000.0  << " seconds to complete transmission." << endl;
+	
+	cout << "Source transfer statistics:" << endl
+	<< "\t" << elapsed_nano_sec / 1000000000.0  << " seconds to complete transmission" << endl
+	<< "\t" << NUM_BITS_TO_SEND + get_source_sequence().size() << " bits transfered" << endl
+	<< "\t" << (NUM_BITS_TO_SEND + get_source_sequence().size()) / (elapsed_nano_sec / 1000000000.0) << " bits/second" << endl;
 
 	cout << "END SOURCE PROGRAM" << endl;
 	return 0;
