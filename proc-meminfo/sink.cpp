@@ -69,8 +69,7 @@ void record_transmission(){
 }
 
 // Write out the contents of trans_readings to a text file (raw MemFree readings)
-// Output file format has first lines as threshold values, HOLD_TIME, CHANNEL_TIME
-// The following numbers are the recordings
+// Output file format has first line as with config values, the following line are the recorded data
 void write_out_raw_readings(){
 	cout << "Writing our recorded data for plotting..." << endl;
 	vector<unsigned long> trans_readings = get_trans_readings();	// Copy over raw meminfo readings
@@ -78,8 +77,8 @@ void write_out_raw_readings(){
 	output_file.open("output/MemFree_values.txt", ios::trunc);
 
 	// Threshold values, HOLD_TIME, CHANNEL_TIME
-	output_file << ZERO << endl << ZERO_UPPER_LIMIT << endl << ONE << endl << ONE_UPPER_LIMIT << endl
-	<< HOLD_TIME << endl << CHANNEL_TIME << endl;
+	output_file << ZERO << " " << ZERO_UPPER_LIMIT << " " << ONE << " " << ONE_UPPER_LIMIT << " "
+	<< NULL_value << " " << LOW_BIT_ALLOC << " " << HIGH_BIT_ALLOC << " " << HOLD_TIME << " " << CHANNEL_TIME << endl;
 
 	for(int i = 0; i < trans_readings.size(); i++){
 		output_file << trans_readings[i] << endl;

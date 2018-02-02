@@ -36,10 +36,10 @@ void send_bit(int bit){
 	void *memory_ptr;
 
 	if(bit == 1){
-		alloc_amount = HIGH_BIT_ALLOC * 1024;
+		alloc_amount = HIGH_BIT_ALLOC * 1000;
 	}
 	else{
-		alloc_amount = LOW_BIT_ALLOC * 1024;
+		alloc_amount = LOW_BIT_ALLOC * 1000;
 	}
 
 	memory_ptr = malloc(alloc_amount);
