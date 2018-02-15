@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-vector<int> data;				// Recoreded data from the channel
+vector<int> data;				// Recoreded data from the channel; Contains the decoded 1's and 0's
 unsigned long NULL_value = 0;   // A copy of base_mem_free from meminfo.cpp. MemFree value used to represent a null value during transmission
 unsigned long ZERO = 0;		 	// MemFree value used to represent a zero during transmission
 unsigned long ONE = 0;		  	// MemFree value used to represent a one during transmission

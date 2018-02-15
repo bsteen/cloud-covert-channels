@@ -1,4 +1,5 @@
 all: source sink
+	mkdir -p output
 
 source: source.o meminfo.o
 	g++ source.o meminfo.o -o source
