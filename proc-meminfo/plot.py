@@ -58,7 +58,7 @@ plt.scatter(one_x_indexes, one_y_indexes, color="cyan", marker='.', label="1 bit
 plt.xlabel("index #")
 plt.ylabel("MemFree (kB)")
 
-title = "MemFree Values Recorded by Sink\nza=" + config_data[5] + " kB; oa=" + config_data[6] + \
+title = "MemFree Values Recorded by Sink\nZa=" + config_data[5] + " kB; Oa=" + config_data[6] + \
         " kB; holdt=" + config_data[7] + " us; channelt=" + config_data[8] + " s"
 plt.title(title)
 # plt.legend(loc='lower right')

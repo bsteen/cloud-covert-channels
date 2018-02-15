@@ -109,13 +109,12 @@ void convert_transmission(bool write_out){
 		indexes.open("output/One-Zero_indexes.txt", ios::trunc);
 	}
 
-	// Because this channel uses MemFree (amount of available memory left), NULL_value will the be the largest of the 3 numbers, ZERO will be smaller
-	// than NULL_value and larger than ONE, and ONE will be the smallest of the three.
+	// Because this channel uses MemFree (amount of available memory left), NULL_value > ZERO_UPPER_LIMIT > ONE_UPPER_LIMIT
 	for(int i = 0; i < trans_readings.size(); i++){
 		if(trans_readings[i] > ZERO_UPPER_LIMIT){ // Represents a null value (An "idle" value in between transmission of a 1 or 0)
 			// printf("\tFound null @%d (%lu kb)\n", i, trans_readings[i]);
 			
-			// Determine if minimum value of last peak was a 1 or 0; Check max value after bottom of peak is detected
+			// Check minimum value after end of dip is detected; Determine if minimum value is a 1 or 0
 			if(i > 0 && trans_readings[i - 1] <= ZERO_UPPER_LIMIT){
 				if(peak_value <= ONE_UPPER_LIMIT){
 					// printf("\tFound 1 @%d (%lu kB)\n", peak_value_index, peak_value);
@@ -191,12 +190,10 @@ bool does_seq_match(int offset_index){
 int find_start_index(){
 	cout << "Looking for source's start sequence in recorded data..." << endl;
 	int source_sequence_size = get_source_sequence().size();
+	int data_size = data.size();
 
-	for(int i = 0; i < data.size(); i++){
-		if(source_sequence_size + i > data.size()){
-			break;	// The data vector can not contain any more potentially matching sequences
-		}
-		else if(does_seq_match(i)){
+	for(int i = 0; i < data_size - source_sequence_size + 1; i++){
+		if(does_seq_match(i)){
 			cout << "\tFound starting sequence!" << endl;
 			return i + source_sequence_size;
 		}
