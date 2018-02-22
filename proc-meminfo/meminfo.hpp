@@ -10,7 +10,7 @@ using namespace std;
 
 #define HIGH_BIT_ALLOC 100000	// Number of kB below baseline FreeMem for sink to detect a '1'
 #define LOW_BIT_ALLOC 50000     // Number of kB below FreeMem usage for sink to detect a '0'
-#define DETECT_VARIANCE 0.2     // Percent (0 to 1) over or under a memory value can be and still be detected as a 1 or 0
+#define DETECT_VARIANCE 0.2     // Percent (decimal from 0 to 1) over or under a memory value can be and still be detected as a 1 or 0
 #define CHANNEL_TIME  2			// Number of seconds the channel will be active; The channel is active when the sink is recording data
 #define CALIB_TIME 1            // Amount of seconds source/sink will spend calculating the average baseline memory usage before starting the channel
 #define CALIB_DELAY 100000      // Number of microseconds between each calibration recording; A smaller number means more calibration recordings will be made

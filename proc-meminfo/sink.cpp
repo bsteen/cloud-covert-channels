@@ -38,7 +38,7 @@ void setup_channel(){
 
 	cout << "Calibration complete:" << endl
 	<< "\tRecording period is every " << RECORD_DELAY * 0.000001 << " seconds." << endl
-	<< "\tDetection leniency is ±" << 100 * DETECT_VARIANCE << "% of nominal values." << endl
+	<< "\tDetection leniency is +" << 100 * DETECT_VARIANCE << "% of nominal values." << endl
 	<< "\tNull value will be represented with >" <<  ZERO_UPPER_LIMIT << " kB." << endl;
 	printf("\tZero value is represented with [%lu, %lu] kB.\n\tOne value is represented with [0, %lu] kB.\n", ONE_UPPER_LIMIT + 1, ZERO_UPPER_LIMIT, ONE_UPPER_LIMIT);
 
