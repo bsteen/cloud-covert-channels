@@ -60,14 +60,15 @@ void send_bit(int bit){
 // Sequence of bits that precedes the actual data
 // Lets the sink identify the source's transmission
 void send_start_seq(){
-	cout << "Source sending start sequence now..." << endl;
+	cout << "Source sending start sequence now..." << endl << "\t";
 
 	vector<int> source_sequence = get_source_sequence();
 	for(int i = 0; i < source_sequence.size(); i++){
+		cout << source_sequence[i];
 		send_bit(source_sequence[i]);
 	}
 
-	cout << "\tDone sending start sequence." << endl;
+	cout << endl <<"\tDone sending start sequence." << endl;
 	return;
 }
 

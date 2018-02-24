@@ -185,7 +185,7 @@ bool does_seq_match(int offset_index){
 }
 
 // Analyses recorded data to find the source's starting sequence
-// Returns the index in trans_readings that points to the start of the source's transmission
+// Returns the index in trans_readings that points to the start of the source's start sequence
 // -1 is returned if the sequence isn't found
 int find_start_index(){
 	cout << "Looking for source's start sequence in recorded data..." << endl;
@@ -195,21 +195,44 @@ int find_start_index(){
 	for(int i = 0; i < data_size - source_sequence_size + 1; i++){
 		if(does_seq_match(i)){
 			cout << "\tFound starting sequence!" << endl;
-			return i + source_sequence_size;
+			return i;
 		}
 	}
 
-	cout << "\tCould not find source's start sequence!" << endl;
+	cout << "\tWARNING! Could not find source's start sequence!" << endl
+	<< "\tRecorded data may be inaccurate!" << endl;
 	return -1;
 }
 
 // Prints out the data from the transmission
-// This is all the ones and zeros starting right after the source's start sequence
+// In brackets, it prints out the starting sequence
+// After the brackets, it prints out the actual transmission data
 void readout_data(int start_index){
 	cout << "Reading out received data now..." << endl << "\t";
-
-	for(int i = start_index; i < data.size(); i++){
-		cout << data[i];
+	
+	// If the start sequence wasn't found, print out all recored values
+	if(start_index == -1){
+		if(data.size() == 0){
+			cout << "No 1s or 0s were found in the tranmission!";
+		}
+		else{
+			for(int i = 0; i < data.size(); i++){
+				cout << data[i];
+			}
+		}
+	}
+	else{
+		int src_size = get_source_sequence().size();
+		
+		cout << "[";
+		for(int i = start_index; i < start_index + src_size; i++){
+			cout << data[i];
+		}
+		cout << "]";
+		
+		for(int i = start_index + src_size; i < data.size(); i++){
+			cout << data[i];
+		}
 	}
 
 	cout << endl << "\tDone reading out data." << endl;
@@ -234,13 +257,7 @@ int main(int argc, char* argv[]){
 	}
 
 	int index = find_start_index();
-	if(index == -1){
-		cout << "END SINK PROGRAM" << endl;
-		exit(1);
-	}
-	else{
-		readout_data(index);
-	}
+	readout_data(index);
 
 	cout << "END SINK PROGRAM" << endl;
 	return 0;
