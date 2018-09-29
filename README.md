@@ -1,13 +1,12 @@
 # cloud-covert-channels
 Creating covert channels in Linux-based cloud container environments. The paper 
 on this research is forthcoming. It will be published in *IEEE Transactions on 
-Dependable and Secure Computing*. Clean up of the code is also forthcoming.  
+Dependable and Secure Computing*. The paper is currently in the peer-review/revison stage. Clean up of the code is also forthcoming.  
 
 ## Channels
 **proc-locks**  
 Covert channel using /proc/locks. It implements an ACK system that reduces 
-channel bandwidth, but improves channel reliability. This version is 
-unmaintained.  
+channel bandwidth, but improves channel reliability.
 
 **proc-locks-no-ack**  
 Covert channel using /proc/locks, except the receiver does not ACK the sender 
