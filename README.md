@@ -1,7 +1,5 @@
 # cloud-covert-channels
-Creating covert channels in Linux-based cloud container environments. The paper 
-on this research is forthcoming. It will be published in *IEEE Transactions on 
-Dependable and Secure Computing*. The paper is currently in the peer-review/revison stage. Clean up of the code is also forthcoming.  
+Creating covert channels in Linux-based cloud container environments. The paper accompanying this research is titled "A Study on the Security Implications of Information Leakages in Container Clouds." It is  published in *IEEE Transactions on Dependable and Secure Computing*, 2018. Clean up of the code is also forthcoming.  
 
 ## Channels
 **proc-locks**  
