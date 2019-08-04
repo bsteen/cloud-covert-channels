@@ -1,6 +1,6 @@
 # cloud-covert-channels
 Creating covert channels in Linux-based cloud container environments. The paper accompanying this research is:  
-Xing Gao, Benjamin Steenkamer, Zhongshu Gu, Mehmet Kayaalp, Dimitrios Pendarakis, and Haining Wang, ["A Study on the Security Implications of Information Leakages in Container Clouds"](https://ieeexplore.ieee.org/document/8523802), in *IEEE Transactions on Dependable and Secure Computing*.
+Xing Gao, Benjamin Steenkamer, Zhongshu Gu, Mehmet Kayaalp, Dimitrios Pendarakis, and Haining Wang, "[A Study on the Security Implications of Information Leakages in Container Clouds](https://ieeexplore.ieee.org/document/8523802)", in *IEEE Transactions on Dependable and Secure Computing*.
 
 ## Channels
 **proc-locks**  
