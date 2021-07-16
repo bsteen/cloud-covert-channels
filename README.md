@@ -2,6 +2,11 @@
 Creating covert channels in Linux-based cloud container environments. The paper accompanying this research is:  
 Xing Gao, Benjamin Steenkamer, Zhongshu Gu, Mehmet Kayaalp, Dimitrios Pendarakis, and Haining Wang, "[A Study on the Security Implications of Information Leakages in Container Clouds](https://ieeexplore.ieee.org/document/8523802)", in *IEEE Transactions on Dependable and Secure Computing*.
 
+## Presentation / Slides
+While in graduate school, I decided to give a presentation on the covert channel aspect of this paper for an advanced cyber secuity class. I have uploaded the slides and video recording:
+- [Slides](https://github.com/bsteen/cloud-covert-channels/blob/master/cloud-container-slides.pdf)
+- [Video presentation](https://drive.google.com/file/d/16dwkGTXmSIioPF5IrAv0RN_ZEx4jipC8/view?usp=sharing) (This recording isn't the best; please forgive the mumbling and places where I speak too fast)
+
 ## Channels
 **proc-locks**  
 Covert channel using /proc/locks. It implements an ACK system that reduces 
